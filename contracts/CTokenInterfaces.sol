@@ -83,13 +83,13 @@ contract CTokenStorage {
     uint public borrowIndex;
 
     /**
-     * @notice Total amount of outstanding borrows of the underlying in this market
+     * @notice 该市场标的资产的未偿还借款总额
      */
     // 精度为underlying asset 的精度，会累加到利息
     uint public totalBorrows;
 
     /**
-     * @notice Total amount of reserves of the underlying held in this market
+     * @notice 在该市场持有的标的资产储备金总额
      */
     // 精度为 underlying asseet 的精度
     uint public totalReserves;
@@ -100,9 +100,9 @@ contract CTokenStorage {
     uint public totalSupply;
 
     /**
-     * @notice Official record of token balances for each account
+     * @notice 每个账户的代币余额的官方记录 记录用户存款余额
      */
-    // 用户存款余额
+    // 
     mapping (address => uint) internal accountTokens;
 
     /**
@@ -110,23 +110,24 @@ contract CTokenStorage {
      */
     mapping (address => mapping (address => uint)) internal transferAllowances;
 
-    /**
-     * @notice Container for borrow balance information
-     * @member principal Total balance (with accrued interest), after applying the most recent balance-changing action
-     * @member interestIndex Global borrowIndex as of the most recent balance-changing action
-     */
+   /**
+      * @notice 借入余额信息的容器
+      * @member principal 总余额（包括应计利息），在应用最近的余额更改操作后
+      * @member interestIndex 全球借贷指数截至最近的余额变化行动
+    */
     struct BorrowSnapshot {
-        uint principal;
-        uint interestIndex;
+        uint principal; //  借款总额度( +利息)
+        uint interestIndex; //  记录借款指数
     }
 
     /**
-     * @notice Mapping of account addresses to outstanding borrow balances
+     * @notice 将账户地址映射到未偿借款余额
      */
+    // 借款人 未偿还的贷款额度 == 借款人 借款额度
     mapping(address => BorrowSnapshot) internal accountBorrows;
 
     /**
-     * @notice Share of seized collateral that is added to reserves
+     * @notice 被扣押的抵押品的份额被添加到准备金中
      */
     uint public constant protocolSeizeShareMantissa = 2.8e16; //2.8%
 

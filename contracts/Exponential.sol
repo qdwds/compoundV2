@@ -120,7 +120,7 @@ contract Exponential is CarefulMath, ExponentialNoError {
     }
 
     /**
-     * @dev Divide a scalar by an Exp, then truncate to return an unsigned integer.
+     * @dev 将标量除以Exp，然后截断以返回无符号整数
      */
     function divScalarByExpTruncate(uint scalar, Exp memory divisor) pure internal returns (MathError, uint) {
         (MathError err, Exp memory fraction) = divScalarByExp(scalar, divisor);

@@ -36,6 +36,7 @@ contract ExponentialNoError {
      * @dev Multiply an Exp by a scalar, then truncate to return an unsigned integer.
      */
     function mul_ScalarTruncate(Exp memory a, uint scalar) pure internal returns (uint) {
+        // a ➗ scalar / 1e18
         Exp memory product = mul_(a, scalar);
         return truncate(product);
     }

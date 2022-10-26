@@ -35,30 +35,23 @@ contract ComptrollerV1Storage is UnitrollerAdminStorage {
     PriceOracle public oracle;
 
     /**
-     * @notice Multiplier used to calculate the maximum repayAmount when liquidating a borrow
+     * @notice 债务超过资产抵押率的时候可以清算多少债务
      */
-    // 债务超过资产抵押率的时候可以清算多少债务
-    // 50%
-    uint public closeFactorMantissa;
+    uint public closeFactorMantissa;    //  50% = 1e18 * 0.5
 
     /**
-     * @notice Multiplier representing the discount on collateral that a liquidator receives
+     * @notice 清算者在清算的时候可以多得到的奖励   清算激励 是从用户的抵押资产中扣减
      */
-    // 清算者在清算的时候可以多得到的奖励
-    // 1.08
-    uint public liquidationIncentiveMantissa;
+    uint public liquidationIncentiveMantissa;   //  1.08 =  1e8 * 1.08
 
     /**
-     * @notice Max number of assets a single account can participate in (borrow or use as collateral)
+     * @notice 最多有多少资产
      */
-    // 最多有多少资产
-    // 20
-    uint public maxAssets;
+    uint public maxAssets;  //  20
 
     /**
-     * @notice Per-account mapping of "assets you are in", capped by maxAssets
+     * @notice 记录用户参与的资产，不区分存款和借款！！！
      */
-    // 记录用户参与的资产，不区分存款和借款
     mapping(address => CToken[]) public accountAssets;
 
 }
@@ -78,8 +71,8 @@ contract ComptrollerV2Storage is ComptrollerV1Storage {
         // 100usdc 可以抵押价值90usdc的资产
         uint collateralFactorMantissa;
 
-        /// @notice Per-market mapping of "accounts in this asset"
-        // 用户是否进入资产？
+        /// @notice 按市场映射“此资产中的账户”
+        //  检查当前账户是否有资产
         mapping(address => bool) accountMembership;
 
         /// @notice Whether or not this market receives COMP
@@ -106,10 +99,10 @@ contract ComptrollerV2Storage is ComptrollerV1Storage {
     bool public _borrowGuardianPaused;
     // 是否开启转账功能
     bool public transferGuardianPaused;
-    bool public seizeGuardianPaused;
+    bool public seizeGuardianPaused;    //  是否允许扣押
     // 对应资产的开关
-    mapping(address => bool) public mintGuardianPaused;
-    mapping(address => bool) public borrowGuardianPaused;
+    mapping(address => bool) public mintGuardianPaused;     //  mint 铸币权限
+    mapping(address => bool) public borrowGuardianPaused;   //  借款权限
 }
 // v3-v6 自己的代币相关
 contract ComptrollerV3Storage is ComptrollerV2Storage {
@@ -155,11 +148,11 @@ contract ComptrollerV3Storage is ComptrollerV2Storage {
 }
 
 contract ComptrollerV4Storage is ComptrollerV3Storage {
-    /// @notice The borrowCapGuardian can set borrowCaps to any number for any market. Lowering the borrow cap could disable borrowing on the given market.
+    /// @notice borrowCapGuardian可以将borrowCaps设置为任何市场的任何数字。降低借款上限可能会使特定市场无法借款.
     address public borrowCapGuardian;
 
-    /// @notice Borrow caps enforced by borrowAllowed for each cToken address. Defaults to zero which corresponds to unlimited borrowing.
-    mapping(address => uint) public borrowCaps;
+    /// @notice 由borrowAllowed为每个cToken地址强制的借用上限。默认为零，对应于无限借款。
+    mapping(address => uint) public borrowCaps; //  借款上线 0为无限
 }
 
 contract ComptrollerV5Storage is ComptrollerV4Storage {
