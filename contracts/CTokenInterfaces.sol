@@ -38,12 +38,12 @@ contract CTokenStorage {
     uint internal constant reserveFactorMaxMantissa = 1e18;
 
     /**
-     * @notice Administrator for this contract
+     * @notice 管理员
      */
     address payable public admin;
 
     /**
-     * @notice Pending administrator for this contract
+     * @notice 管理员
      */
     address payable public pendingAdmin;
 
@@ -285,7 +285,7 @@ contract CErc20Interface is CErc20Storage {
 
 contract CDelegationStorage {
     /**
-     * @notice Implementation address for this contract
+     * @notice 当前合约的执行地址
      */
     address public implementation;
 }

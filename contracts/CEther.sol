@@ -10,15 +10,15 @@ import "./CToken.sol";
 // eth 和 CEth 交互合约
 contract CEther is CToken {
     /**
-     * @notice Construct a new CEther money market
-     * @param comptroller_ The address of the Comptroller
-     * @param interestRateModel_ The address of the interest rate model
-     * @param initialExchangeRateMantissa_ The initial exchange rate, scaled by 1e18
-     * @param name_ ERC-20 name of this token
-     * @param symbol_ ERC-20 symbol of this token
-     * @param decimals_ ERC-20 decimal precision of this token
-     * @param admin_ Address of the administrator of this token
-     */
+      * @notice 构建一个新的 Cether 货币市场
+      * @param comptroller_ 主计长地址
+      * @param interestRateModel_ 利率模型的地址
+      * @param initialExchangeRateMantissa_ 初始汇率，按 1e18 缩放
+      * @param name_ 此令牌的 ERC-20 名称
+      * @param symbol_ 此代币的 ERC-20 符号
+      * @param decimals_ 此令牌的 ERC-20 十进制精度
+      * @param admin_ 此令牌的管理员地址
+      */
     constructor(
         ComptrollerInterface comptroller_,
         InterestRateModel interestRateModel_,
@@ -118,7 +118,7 @@ contract CEther is CToken {
     }
 
     /**
-     * @notice Send Ether to CEther to mint
+     * @notice 将以太币发送到 CEther 到铸币厂
      */
     function () external payable {
         (uint err,) = mintInternal(msg.value);
@@ -128,22 +128,23 @@ contract CEther is CToken {
     /*** Safe Token ***/
 
     /**
-     * @notice Gets balance of this contract in terms of Ether, before this message
-     * @dev This excludes the value of the current message, if any
-     * @return The quantity of Ether owned by this contract
-     */
+      * @notice 在此消息之前以 Ether 形式获取此合约的余额
+      * @dev 这不包括当前消息的值，如果有的话
+      * @return 该合约拥有的以太币数量
+      */
     function getCashPrior() internal view returns (uint) {
         (MathError err, uint startingBalance) = subUInt(address(this).balance, msg.value);
+        console.log("startingBalance", startingBalance);
         require(err == MathError.NO_ERROR);
         return startingBalance;
     }
 
     /**
-     * @notice Perform the actual transfer in, which is a no-op
-     * @param from Address sending the Ether
-     * @param amount Amount of Ether being sent
-     * @return The actual amount of Ether transferred
-     */
+      * @notice 执行实际的转入，这是一个空操作
+      * @param 来自发送以太币的地址
+      * @param amount 发送的以太币数量
+      * @return 实际转账的以太币数量
+      */
     function doTransferIn(address from, uint amount) internal returns (uint) {
         // Sanity checks
         require(msg.sender == from, "sender mismatch");
@@ -153,9 +154,11 @@ contract CEther is CToken {
 
     function doTransferOut(address payable to, uint amount) internal {
         /* Send the Ether, with minimal gas and revert on failure */
+        // 发送eth
         to.transfer(amount);
     }
 
+    // 返回错误信息
     function requireNoError(uint errCode, string memory message) internal pure {
         if (errCode == uint(Error.NO_ERROR)) {
             return;

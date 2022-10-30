@@ -216,17 +216,16 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     }
 
     /**
-     * @notice Get the underlying balance of the `owner`
-     * @dev This also accrues interest in a transaction
-     * @param owner The address of the account to query
-     * @return The amount of underlying owned by `owner`
-     */
-
+      * @notice 获取`owner`的底层余额
+      * @dev 这也会在交易中产生利息
+      * @param owner 要查询的账户地址
+      * @return `owner` 拥有的底层证券数量
+      */
     // 基础资金余额 =  供应余额
     function balanceOfUnderlying(address owner) external returns (uint) {
         // 获取最新汇率
         Exp memory exchangeRate = Exp({mantissa: exchangeRateCurrent()});
-        console.log("exchangeRate 最新汇率", exchangeRate);
+        console.log("exchangeRate 最新汇率", exchangeRate.mantissa);
         // 最新汇率  用户余额
         (MathError mErr, uint balance) = mulScalarTruncate(exchangeRate, accountTokens[owner]);
         console.log("balance", balance);
@@ -289,6 +288,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     * @notice 返回此cToken的当前每块供应利率 ? 供应利率？？
     * @return 每个区块的供应利率，按1e18缩放
     */
+    //  每个区块的供应利率
     function supplyRatePerBlock() external view returns (uint) {
         // 调用传入利率模型合约的方法计算 还款利率 总借入  总储备量 市场储备资金
         console.log("reserveFactorMantissa", reserveFactorMantissa);
@@ -445,9 +445,9 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     }
 
     /**
-     *  @notice Get cash balance of this cToken in the underlying asset
-     *  @return The quantity of underlying asset owned by this contract
-     */
+      * @notice 获取该cToken在标的资产中的现金余额
+      * @return 该合约拥有的标的资产数量
+      */
     function getCash() external view returns (uint) {
         return getCashPrior();
     }
@@ -851,7 +851,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     * @param borrowAmount 要借入的基础资产的金额
     * @return uint 0=成功，否则为失败（有关详细信息，请参阅ErrorReporter.sol）
     */
-    // 借钱
+    // 借钱 需要先有存款额度
     function borrowInternal(uint borrowAmount) internal nonReentrant returns (uint) {
         //  计算 借款利率
         uint error = accrueInterest();
@@ -915,7 +915,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         (vars.mathErr, vars.accountBorrowsNew) = addUInt(vars.accountBorrows, borrowAmount);
         console.log("vars.accountBorrows",vars.accountBorrows);
         console.log("borrowAmount",borrowAmount);
-        conosle.log("vars.accountBorrowsNew",vars.accountBorrowsNew);
+        console.log("vars.accountBorrowsNew",vars.accountBorrowsNew);
         if (vars.mathErr != MathError.NO_ERROR) {
             return failOpaque(Error.MATH_ERROR, FailureInfo.BORROW_NEW_ACCOUNT_BORROW_BALANCE_CALCULATION_FAILED, uint(vars.mathErr));
         }
@@ -980,7 +980,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
       * @param repayAmount 还款金额
       * @return (uint, uint) 错误码（0=成功，否则失败，见ErrorReporter.sol），实际还款金额。
       */
-    //  还款 自己换别人的钱
+    //  还款 我帮别人还款，只能还50%
     function repayBorrowBehalfInternal(address borrower, uint repayAmount) internal nonReentrant returns (uint, uint) {
         // 计算利息
         uint error = accrueInterest();
@@ -1135,6 +1135,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
       * @param cTokenCollateral 从借款人那里获取抵押品的市场
       * @return (uint, uint) 错误码（0=成功，否则失败，见ErrorReporter.sol），实际还款金额。
       */
+    //  指定 a 清算 b 指定额度。最多50%
     function liquidateBorrowFresh(
         address liquidator, 
         address borrower, 
@@ -1348,11 +1349,11 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     /*** Admin Functions ***/
 
     /**
-      * @notice Begins transfer of admin rights. The newPendingAdmin must call `_acceptAdmin` to finalize the transfer.
-      * @dev Admin function to begin change of admin. The newPendingAdmin must call `_acceptAdmin` to finalize the transfer.
-      * @param newPendingAdmin New pending admin.
-      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
-      */
+       * @notice 开始转移管理员权限。 newPendingAdmin 必须调用 `_acceptAdmin` 来完成传输。
+       * @dev 管理员功能开始更改管理员。 newPendingAdmin 必须调用 `_acceptAdmin` 来完成传输。
+       * @param newPendingAdmin 新的待处理管理员。
+       * @return uint 0=成功，否则失败（详见ErrorReporter.sol）
+       */
     function _setPendingAdmin(address payable newPendingAdmin) external returns (uint) {
         // Check caller = admin
         if (msg.sender != admin) {
@@ -1372,12 +1373,13 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     }
 
     /**
-      * @notice Accepts transfer of admin rights. msg.sender must be pendingAdmin
-      * @dev Admin function for pending admin to accept role and update admin
-      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
-      */
+       * @notice 接受管理员权限的转移。 msg.sender 必须是 pendingAdmin
+       * @dev 管理员功能，用于待定管理员接受角色并更新管理员
+       * @return uint 0=成功，否则失败（详见ErrorReporter.sol）
+       */
     function _acceptAdmin() external returns (uint) {
         // Check caller is pendingAdmin and pendingAdmin ≠ address(0)
+        // 接受权限着不能是之前的管理员和黑洞地址
         if (msg.sender != pendingAdmin || msg.sender == address(0)) {
             return fail(Error.UNAUTHORIZED, FailureInfo.ACCEPT_ADMIN_PENDING_ADMIN_CHECK);
         }
@@ -1427,12 +1429,13 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     }
 
     /**
-      * @notice accrues interest and sets a new reserve factor for the protocol using _setReserveFactorFresh
-      * @dev Admin function to accrue interest and set a new reserve factor
-      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
-      */
+       * @notice 产生利息并使用 _setReserveFactorFresh 为协议设置一个新的储备因子
+       * @dev 管理函数来产生利息并设置一个新的储备因子
+       * @return uint 0=成功，否则失败（详见ErrorReporter.sol）
+       */
     //  设置保证金系数
     function _setReserveFactor(uint newReserveFactorMantissa) external nonReentrant returns (uint) {
+        // 计算累积利率
         uint error = accrueInterest();
         if (error != uint(Error.NO_ERROR)) {
             // accrueInterest emits logs on errors, but on top of that we want to log the fact that an attempted reserve factor change failed.
@@ -1443,10 +1446,11 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     }
 
     /**
-      * @notice Sets a new reserve factor for the protocol (*requires fresh interest accrual)
-      * @dev Admin function to set a new reserve factor
-      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
-      */
+       * @notice 为协议设置新的储备因子（*需要新的应计利息）
+       * @dev 管理函数设置一个新的储备因子
+       * @return uint 0=成功，否则失败（详见ErrorReporter.sol）
+       */
+    //   设置利率
     function _setReserveFactorFresh(uint newReserveFactorMantissa) internal returns (uint) {
         // Check caller is admin
         if (msg.sender != admin) {
@@ -1454,15 +1458,17 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         }
 
         // Verify market's block number equals current block number
+        //  只能在一个区块完成
         if (accrualBlockNumber != getBlockNumber()) {
             return fail(Error.MARKET_NOT_FRESH, FailureInfo.SET_RESERVE_FACTOR_FRESH_CHECK);
         }
 
         // Check newReserveFactor ≤ maxReserveFactor
+        // 新利率要大于储备利率
         if (newReserveFactorMantissa > reserveFactorMaxMantissa) {
             return fail(Error.BAD_INPUT, FailureInfo.SET_RESERVE_FACTOR_BOUNDS_CHECK);
         }
-
+        // 修改利率
         uint oldReserveFactorMantissa = reserveFactorMantissa;
         reserveFactorMantissa = newReserveFactorMantissa;
 
@@ -1472,11 +1478,13 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     }
 
     /**
-     * @notice Accrues interest and reduces reserves by transferring from msg.sender
-     * @param addAmount Amount of addition to reserves
-     * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
-     */
+      * @notice 通过从 msg.sender 转移产生利息并减少准备金
+      * @param addAmount 增加储备的数量
+      * @return uint 0=成功，否则失败（详见ErrorReporter.sol）
+      */
+    //  admin 增加储备金
     function _addReservesInternal(uint addAmount) internal nonReentrant returns (uint) {
+        // 计算累积利率
         uint error = accrueInterest();
         if (error != uint(Error.NO_ERROR)) {
             // accrueInterest emits logs on errors, but on top of that we want to log the fact that an attempted reduce reserves failed.
@@ -1489,11 +1497,12 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     }
 
     /**
-     * @notice Add reserves by transferring from caller
-     * @dev Requires fresh interest accrual
-     * @param addAmount Amount of addition to reserves
-     * @return (uint, uint) An error code (0=success, otherwise a failure (see ErrorReporter.sol for details)) and the actual amount added, net token fees
-     */
+      * @notice 通过从调用者转移添加储备
+      * @dev 需要新的应计利息
+      * @param addAmount 增加储备的数量
+      * @return (uint, uint) 错误代码（0=成功，否则失败（详见ErrorReporter.sol））和实际添加的金额，净代币费用
+      */
+    // 添加指定额度到 储备金总 计算出新的总储备金 并且更新
     function _addReservesFresh(uint addAmount) internal returns (uint, uint) {
         // totalReserves + actualAddAmount
         uint totalReservesNew;
@@ -1509,21 +1518,22 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         // (No safe failures beyond this point)
 
         /*
-         * We call doTransferIn for the caller and the addAmount
-         *  Note: The cToken must handle variations between ERC-20 and ETH underlying.
-         *  On success, the cToken holds an additional addAmount of cash.
-         *  doTransferIn reverts if anything goes wrong, since we can't be sure if side effects occurred.
-         *  it returns the amount actually transferred, in case of a fee.
-         */
+          * 我们为调用者和 addAmount 调用 doTransferIn
+          * 注意：cToken 必须处理 ERC-20 和 ETH 底层之间的变化。
+          * 成功时，cToken 持有额外的 addAmount 现金。
+          * 如果出现任何问题，doTransferIn 会恢复，因为我们无法确定是否发生了副作用。
+          * 在收费的情况下，它会返回实际转账的金额。
+          */
 
         actualAddAmount = doTransferIn(msg.sender, addAmount);
-
+        // 总储备金新 = 总储备金 + 实际添加金额
         totalReservesNew = totalReserves + actualAddAmount;
 
         /* Revert on overflow */
         require(totalReservesNew >= totalReserves, "add reserves unexpected overflow");
 
         // Store reserves[n+1] = reserves[n] + actualAddAmount
+        // 修改总储备金额度
         totalReserves = totalReservesNew;
 
         /* Emit NewReserves(admin, actualAddAmount, reserves[n+1]) */
@@ -1535,11 +1545,13 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
 
 
     /**
-     * @notice Accrues interest and reduces reserves by transferring to admin
-     * @param reduceAmount Amount of reduction to reserves
-     * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
-     */
+      * @notice 通过转移到管理员来产生利息并减少准备金
+      * @param reduceAmount 减少到准备金的数量
+      * @return uint 0=成功，否则失败（详见ErrorReporter.sol）
+      */
+    //  admin 减少储备金额度
     function _reduceReserves(uint reduceAmount) external nonReentrant returns (uint) {
+        // 计算累积利率
         uint error = accrueInterest();
         if (error != uint(Error.NO_ERROR)) {
             // accrueInterest emits logs on errors, but on top of that we want to log the fact that an attempted reduce reserves failed.
@@ -1550,16 +1562,17 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     }
 
     /**
-     * @notice Reduces reserves by transferring to admin
-     * @dev Requires fresh interest accrual
-     * @param reduceAmount Amount of reduction to reserves
-     * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
-     */
+      * @notice 通过转移到管理员来减少储备
+      * @dev 需要新的应计利息
+      * @param reduceAmount 减少到准备金的数量
+      * @return uint 0=成功，否则失败（详见ErrorReporter.sol）
+      */
     function _reduceReservesFresh(uint reduceAmount) internal returns (uint) {
         // totalReserves - reduceAmount
-        uint totalReservesNew;
+        uint totalReservesNew;  //  总储备金新
 
         // Check caller is admin
+        // admin
         if (msg.sender != admin) {
             return fail(Error.UNAUTHORIZED, FailureInfo.REDUCE_RESERVES_ADMIN_CHECK);
         }
@@ -1569,12 +1582,15 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             return fail(Error.MARKET_NOT_FRESH, FailureInfo.REDUCE_RESERVES_FRESH_CHECK);
         }
 
-        // Fail gracefully if protocol has insufficient underlying cash
+        //  如果协议没有足够的基础现金，则失败
+        console.log("getCashPrior()", getCashPrior());
+        console.log("reduceAmount", reduceAmount);
         if (getCashPrior() < reduceAmount) {
             return fail(Error.TOKEN_INSUFFICIENT_CASH, FailureInfo.REDUCE_RESERVES_CASH_NOT_AVAILABLE);
         }
 
         // Check reduceAmount ≤ reserves[n] (totalReserves)
+        console.log("reduceAmount > totalReserves",reduceAmount, totalReserves);
         if (reduceAmount > totalReserves) {
             return fail(Error.BAD_INPUT, FailureInfo.REDUCE_RESERVES_VALIDATION);
         }
@@ -1582,7 +1598,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         /////////////////////////
         // EFFECTS & INTERACTIONS
         // (No safe failures beyond this point)
-
+        // 新总储备金 = 储备金 - 减少额度
         totalReservesNew = totalReserves - reduceAmount;
         // We checked reduceAmount <= totalReserves above, so this should never revert.
         require(totalReservesNew <= totalReserves, "reduce reserves unexpected underflow");
@@ -1599,12 +1615,14 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     }
 
     /**
-     * @notice accrues interest and updates the interest rate model using _setInterestRateModelFresh
-     * @dev Admin function to accrue interest and update the interest rate model
-     * @param newInterestRateModel the new interest rate model to use
-     * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
-     */
+      * @notice 产生利息并使用 _setInterestRateModelFresh 更新利率模型
+      * @dev 管理功能来产生利息和更新利率模型
+      * @param newInterestRateModel 要使用的新利率模型
+      * @return uint 0=成功，否则失败（详见ErrorReporter.sol）
+      */
+    //  设置利率模型
     function _setInterestRateModel(InterestRateModel newInterestRateModel) public returns (uint) {
+        // 获取累积利率
         uint error = accrueInterest();
         if (error != uint(Error.NO_ERROR)) {
             // accrueInterest emits logs on errors, but on top of that we want to log the fact that an attempted change of interest rate model failed
@@ -1656,23 +1674,23 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     /*** Safe Token ***/
 
     /**
-     * @notice Gets balance of this contract in terms of the underlying
-     * @dev This excludes the value of the current message, if any
-     * @return The quantity of underlying owned by this contract
-     */
+      * @notice 获取该合约在底层证券方面的余额
+      * @dev 这不包括当前消息的值，如果有的话
+      * @return 该合约拥有的底层证券数量
+      */
     function getCashPrior() internal view returns (uint);
 
     /**
-     * @dev Performs a transfer in, reverting upon failure. Returns the amount actually transferred to the protocol, in case of a fee.
-     *  This may revert due to insufficient balance or insufficient allowance.
-     */
+      * @dev 执行传输，失败时恢复。 在收费的情况下返回实际转移到协议的金额。
+      * 这可能会因余额不足或津贴不足而恢复。
+      */
     function doTransferIn(address from, uint amount) internal returns (uint);
 
     /**
-     * @dev Performs a transfer out, ideally returning an explanatory error code upon failure tather than reverting.
-     *  If caller has not called checked protocol's balance, may revert due to insufficient cash held in the contract.
-     *  If caller has checked protocol's balance, and verified it is >= amount, this should not revert in normal conditions.
-     */
+      * @dev 执行转出，理想情况下在失败时返回解释性错误代码而不是恢复。
+      * 如果调用者没有调用检查协议的余额，可能会由于合约中持有的现金不足而恢复。
+      * 如果调用者检查了协议的余额，并验证它 >= 金额，这在正常情况下不应恢复。
+      */
     function doTransferOut(address payable to, uint amount) internal;
 
 
@@ -1681,6 +1699,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     /**
      * @dev Prevents a contract from calling itself, directly or indirectly.
      */
+    // 防止重入攻击
     modifier nonReentrant() {
         require(_notEntered, "re-entered");
         _notEntered = false;
