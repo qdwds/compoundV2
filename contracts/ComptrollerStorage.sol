@@ -156,17 +156,17 @@ contract ComptrollerV4Storage is ComptrollerV3Storage {
 }
 
 contract ComptrollerV5Storage is ComptrollerV4Storage {
-    /// @notice The portion of COMP that each contributor receives per block
+    /// @notice 每个贡献者在每个区块中收到的 COMP 部分
     mapping(address => uint) public compContributorSpeeds;
 
-    /// @notice Last block at which a contributor's COMP rewards have been allocated
+    /// @notice 分配贡献者的 COMP 奖励的最后一个区块
     mapping(address => uint) public lastContributorBlock;
 }
 
 contract ComptrollerV6Storage is ComptrollerV5Storage {
-    /// @notice The rate at which comp is distributed to the corresponding borrow market (per block)
+    /// @notice 补偿分配到相应借贷市场的比率（每块）
     mapping(address => uint) public compBorrowSpeeds;
 
-    /// @notice The rate at which comp is distributed to the corresponding supply market (per block)
+    /// @notice comp 分配到相应供应市场的速率（每块
     mapping(address => uint) public compSupplySpeeds;
 }

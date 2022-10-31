@@ -130,8 +130,8 @@ contract CEther is CToken {
     /**
       * @notice 在此消息之前以 Ether 形式获取此合约的余额
       * @dev 这不包括当前消息的值，如果有的话
-      * @return 该合约拥有的以太币数量
       */
+    //   * @return 该合约拥有的以太币数量
     function getCashPrior() internal view returns (uint) {
         (MathError err, uint startingBalance) = subUInt(address(this).balance, msg.value);
         console.log("startingBalance", startingBalance);
@@ -143,8 +143,8 @@ contract CEther is CToken {
       * @notice 执行实际的转入，这是一个空操作
       * @param 来自发送以太币的地址
       * @param amount 发送的以太币数量
-      * @return 实际转账的以太币数量
       */
+    //   * @return 实际转账的以太币数量
     function doTransferIn(address from, uint amount) internal returns (uint) {
         // Sanity checks
         require(msg.sender == from, "sender mismatch");

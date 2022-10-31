@@ -13,8 +13,8 @@ contract InterestRateModel {
      * @param cash 市场拥有的现金总量
      * @param borrows 市场未偿还的借款总额
      * @param 储备 市场拥有的储备总量
-     * @return 每个区块的借款利率（百分比，按 1e18 缩放）
      */
+    //  * @return 每个区块的借款利率（百分比，按 1e18 缩放）
     function getBorrowRate(
         uint cash,
         uint borrows,
@@ -27,8 +27,8 @@ contract InterestRateModel {
      * @param borrows 市场未偿还的借款总额
      * @param 储备 市场拥有的储备总量
      * @param reserveFactorMantissa 市场当前的储备因子
-     * @return 每个区块的供应率（百分比，按 1e18 缩放）
      */
+    //  * @return 每个区块的供应率（百分比，按 1e18 缩放）
     function getSupplyRate(
         uint cash,
         uint borrows,

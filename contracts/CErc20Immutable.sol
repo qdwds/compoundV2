@@ -10,7 +10,7 @@ import "./CErc20.sol";
 contract CErc20Immutable is CErc20 {
     /**
       * @notice 构建一个新的货币市场
-      * @param based_ 标的资产地址
+      * @param underlying_ 标的资产地址
       * @param comptroller_ 主计长地址
       * @param interestRateModel_ 利率模型的地址
       * @param initialExchangeRateMantissa_ 初始汇率，按 1e18 缩放

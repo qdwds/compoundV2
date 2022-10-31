@@ -11,7 +11,7 @@ const comptrollerG7Name = "ComptrollerG7";
 export const unitollerDeploy = async () => {
     const Unitroller = await ethers.getContractFactory(unitrollerName);
     const unitroller = await Unitroller.deploy();
-    await unitroller.deployed();
+    await unitroller.deployed().catch(err => console.log(err));
     await contractAbi(unitroller.address, unitrollerName);
     return unitroller;
 }

@@ -19,7 +19,7 @@ interface CompLike {
 contract CErc20 is CToken, CErc20Interface {
     /**
       * @notice 初始化新的货币市场
-      * @param based_ 标的资产地址
+      * @param underlying_ 标的资产地址
       * @param comptroller_ 主计长地址
       * @param interestRateModel_ 利率模型的地址
       * @param initialExchangeRateMantissa_ 初始汇率，按 1e18 缩放
@@ -76,7 +76,7 @@ contract CErc20 is CToken, CErc20Interface {
     /**
       * @notice 发件人赎回 cToken 以换取基础资产
       * @dev 无论操作成功与否都会产生利息，除非还原
-      * @paramredeemTokens 要赎回底层证券的 cToken 数量
+      * @param redeemTokens 要赎回底层证券的 cToken 数量
       * @return uint 0=成功，否则失败（详见ErrorReporter.sol）
       */
     // 取款：取出全部存款
@@ -87,7 +87,7 @@ contract CErc20 is CToken, CErc20Interface {
     /**
       * @notice 发件人赎回 cToken 以换取指定数量的基础资产
       * @dev 无论操作成功与否都会产生利息，除非还原
-      * @paramredeemAmount 要赎回的底层证券数量
+      * @param redeemAmount 要赎回的底层证券数量
       * @return uint 0=成功，否则失败（详见ErrorReporter.sol）
       */
     // 取款：取出指定数量的token

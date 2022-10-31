@@ -108,8 +108,8 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
     /**
         * @notice 添加要包括在账户流动性计算中的资产
         * @param cTokens要启用的cToken市场地址列表
-        * @return 是否进入每个相应市场的成功指标
     */
+    // * @return 是否进入每个相应市场的成功指标
     // 部署抵押token
     function enterMarkets(address[] memory cTokens) public returns (uint[] memory) {
         uint len = cTokens.length;
@@ -128,8 +128,8 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
     * @notice 将市场添加到借款人的“资产”中, 进行流动性计算
     * @param cToken 要进入的市场
     * @param borrower 要修改的帐户地址
-    * @return 是否进入市场的成功指标
     */
+    // * @return 是否进入市场的成功指标
     //  记录 借款人 开始借 cToken
     function addToMarketInternal(CToken cToken, address borrower) internal returns (Error) {
         // 用户cToken的资产数量
@@ -156,7 +156,7 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
         marketToJoin.accountMembership[borrower] = true;
         // 记录用户cToken加入市场的的address
         accountAssets[borrower].push(cToken);
-        console.log("accountAssets[borrower]", accountAssets[borrower]);
+        // console.log("accountAssets[borrower]", accountAssets[borrower]);
         emit MarketEntered(cToken, borrower);
 
         return Error.NO_ERROR;
@@ -360,7 +360,7 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
     /**
     * @notice 检查账户是否应被允许借入给定市场的基础资产
     * @param cToken 验证借款的市场
-    * @param bounder 将借入资产的账户
+    * @param borrower 将借入资产的账户
     * @param borrowAmount 账户将借入的基础金额
     * @return 0（如果允许借用），否则返回一个半透明的错误代码（请参阅ErrorReporter.sol）
     */
@@ -479,7 +479,7 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
         // Keep the flywheel moving
         // 获取还款人 借款时候的指数
         Exp memory borrowIndex = Exp({mantissa: CToken(cToken).borrowIndex()});
-        console.log("borrowIndex 还款人借款时候的指数", borrowIndex);
+        console.log("borrowIndex 还款人借款时候的指数", borrowIndex.mantissa);
         // 更新指数
         updateCompBorrowIndex(cToken, borrowIndex);
         // 更新奖励 借款人补偿
@@ -598,7 +598,7 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
       * @param cTokenBorrowed 借款人借入的资产
       * @param 清算人 偿还借款和扣押抵押品的地址
       * @param borrower 借款人地址
-      * @paramseizeTokens 要没收的抵押代币数量
+      * @param seizeTokens 要没收的抵押代币数量
       */
     function seizeAllowed(
         address cTokenCollateral,
@@ -618,8 +618,10 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
             return uint(Error.MARKET_NOT_LISTED);
         }
         // 没有找到对应变量 函数
-        console.log("CToken(cTokenCollateral.comptroller())", CToken(cTokenCollateral.comptroller()));
-        console.log("CToken(cTokenCollateral.cTokenBorrowed())", CToken(cTokenCollateral.cTokenBorrowed()));
+        // console.log("CToken(cTokenCollateral.comptroller())", CToken(cTokenCollateral.comptroller()));
+        // console.log("CToken(cTokenCollateral.cTokenBorrowed())", CToken(cTokenCollateral.cTokenBorrowed()));
+
+
         // 两个审计地址不能相同？？？
         if (CToken(cTokenCollateral).comptroller() != CToken(cTokenBorrowed).comptroller()) {
             return uint(Error.COMPTROLLER_MISMATCH);
@@ -754,8 +756,8 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
 
     /**
       * @notice 确定当前账户流动性 wrt 抵押品要求
-      * @return（可能的错误代码，账户流动性超过抵押品要求，账户余额低于抵押要求）
       */
+    //   * @return（可能的错误代码，账户流动性超过抵押品要求，账户余额低于抵押要求）
     function getAccountLiquidityInternal(address account) internal view returns (Error, uint, uint) {
         return getHypotheticalAccountLiquidityInternal(account, CToken(0), 0, 0);
     }
@@ -786,10 +788,10 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
     * @param redeemTokens 假设要赎回的代币数量
     * @param borrowAmount 假设借入的底层证券数量
     * @dev 请注意，我们使用存储的数据计算每个抵押 cToken 的 exchangeRateStored，不计算累积利息。
-    * @return（可能的错误代码，
     假设账户流动性超过抵押品要求，
     *假设账户缺口低于抵押要求）
     */
+    // * @return（可能的错误代码，
    //   通过给定金额 计算虚拟流动性
     function getHypotheticalAccountLiquidityInternal(
         address account,
@@ -862,9 +864,10 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
         }
 
         // These are safe, as the underflow condition is checked first
-        console.log("vars.sumCollateral > vars.sumBorrowPlusEffects","总抵押额度", vars.sumCollateral , "总借款额度",vars.sumBorrowPlusEffects)
+        console.log("vars.sumCollateral > vars.sumBorrowPlusEffects","总抵押额度", vars.sumCollateral);
+        console.log( "总借款额度",vars.sumBorrowPlusEffects);
         if (vars.sumCollateral > vars.sumBorrowPlusEffects) {
-            console.log("vars.sumCollateral - vars.sumBorrowPlusEffects, 0", vars.sumCollateral - vars.sumBorrowPlusEffects, 0)
+            console.log("vars.sumCollateral - vars.sumBorrowPlusEffects, 0", vars.sumCollateral - vars.sumBorrowPlusEffects, 0);
             return (Error.NO_ERROR, vars.sumCollateral - vars.sumBorrowPlusEffects, 0);
         } else {
             console.log("0, vars.sumBorrowPlusEffects - vars.sumCollateral", 0, vars.sumBorrowPlusEffects - vars.sumCollateral);
@@ -1495,6 +1498,6 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
      * @return The address of COMP
      */
     function getCompAddress() public pure returns (address) {
-        return /**start*/0xc6e7DF5E7b4f2A278906862b61205850344D4e7d/**end*/;
+        return /**start*/0x286B8DecD5ED79c962b2d8F4346CD97FF0E2C352/**end*/;
     }
 }

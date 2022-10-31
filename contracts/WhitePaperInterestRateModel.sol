@@ -4,10 +4,12 @@ import "./InterestRateModel.sol";
 import "./SafeMath.sol";
 
 /**
-  * @title Compound's WhitePaperInterestRateModel Contract
-  * @author Compound
-  * @notice The parameterized model described in section 2.4 of the original Compound Protocol whitepaper
-  */
+   * @title Compound 的 WhitePaperInterestRateModel 合约
+   * @author 复合
+   * @notice 原始复合协议白皮书第 2.4 节中描述的参数化模型
+   */
+//   直线形利率模型
+//   y = k*x + b
 contract WhitePaperInterestRateModel is InterestRateModel {
     using SafeMath for uint;
 
@@ -29,10 +31,10 @@ contract WhitePaperInterestRateModel is InterestRateModel {
     uint public baseRatePerBlock;
 
     /**
-     * @notice Construct an interest rate model
-     * @param baseRatePerYear The approximate target base APR, as a mantissa (scaled by 1e18)
-     * @param multiplierPerYear The rate of increase in interest rate wrt utilization (scaled by 1e18)
-     */
+      * @notice 构建利率模型
+      * @param baseRatePerYear 近似目标基础 APR，尾数（按 1e18 缩放）
+      * @param multiplierPerYear 利率利用率的增长率（按 1e18 缩放）
+      */
     constructor(uint baseRatePerYear, uint multiplierPerYear) public {
         baseRatePerBlock = baseRatePerYear.div(blocksPerYear);
         multiplierPerBlock = multiplierPerYear.div(blocksPerYear);
@@ -41,12 +43,12 @@ contract WhitePaperInterestRateModel is InterestRateModel {
     }
 
     /**
-     * @notice Calculates the utilization rate of the market: `borrows / (cash + borrows - reserves)`
-     * @param cash The amount of cash in the market
-     * @param borrows The amount of borrows in the market
-     * @param reserves The amount of reserves in the market (currently unused)
-     * @return The utilization rate as a mantissa between [0, 1e18]
-     */
+      * @notice 计算市场使用率：`borrows / (cash + borrows - reserves)`
+      * @param cash 市场上的现金数量
+      * @param borrows 市场上的借款数量
+      * @param reserves 市场上的储备量（目前未使用）
+      */
+    //   * @return 使用率作为尾数在 [0, 1e18] 之间
     function utilizationRate(uint cash, uint borrows, uint reserves) public pure returns (uint) {
         // Utilization rate is 0 when there are no borrows
         if (borrows == 0) {
@@ -57,25 +59,25 @@ contract WhitePaperInterestRateModel is InterestRateModel {
     }
 
     /**
-     * @notice Calculates the current borrow rate per block, with the error code expected by the market
-     * @param cash The amount of cash in the market
-     * @param borrows The amount of borrows in the market
-     * @param reserves The amount of reserves in the market
-     * @return The borrow rate percentage per block as a mantissa (scaled by 1e18)
-     */
+      * @notice 计算当前每个区块的借贷利率，错误码是市场预期的
+      * @param cash 市场上的现金数量
+      * @param borrows 市场上的借款数量
+      * @param reserves 市场上的准备金数量
+      */
+    //   * @return 以尾数表示的每个区块的借款利率百分比（按 1e18 缩放）
     function getBorrowRate(uint cash, uint borrows, uint reserves) public view returns (uint) {
         uint ur = utilizationRate(cash, borrows, reserves);
         return ur.mul(multiplierPerBlock).div(1e18).add(baseRatePerBlock);
     }
 
     /**
-     * @notice Calculates the current supply rate per block
-     * @param cash The amount of cash in the market
-     * @param borrows The amount of borrows in the market
-     * @param reserves The amount of reserves in the market
-     * @param reserveFactorMantissa The current reserve factor for the market
-     * @return The supply rate percentage per block as a mantissa (scaled by 1e18)
-     */
+      * @notice 计算每个区块的当前供应率
+      * @param cash 市场上的现金数量
+      * @param borrows 市场上的借款数量
+      * @param reserves 市场上的准备金数量
+      * @param reserveFactorMantissa 市场的当前储备因子
+      */
+    //   * @return 每个块的供应率百分比作为尾数（按 1e18 缩放）
     function getSupplyRate(uint cash, uint borrows, uint reserves, uint reserveFactorMantissa) public view returns (uint) {
         uint oneMinusReserveFactor = uint(1e18).sub(reserveFactorMantissa);
         uint borrowRate = getBorrowRate(cash, borrows, reserves);

@@ -11,7 +11,7 @@ import "./CTokenInterfaces.sol";
 contract CErc20Delegator is CTokenInterface, CErc20Interface, CDelegatorInterface {
     /**
     * @notice 构建一个新的货币市场
-    * @param based_ 标的资产地址
+    * @param underlying_ 标的资产地址
     * @param comptroller_ 主计长地址
     * @param interestRateModel_ 利率模型的地址
     * @param initialExchangeRateMantissa_ 初始汇率，按 1e18 缩放
@@ -253,8 +253,8 @@ contract CErc20Delegator is CTokenInterface, CErc20Interface, CDelegatorInterfac
       * @notice 获取账户余额的快照，以及缓存的汇率
       * @dev 这被主计长用来更有效地执行流动性检查。
       * @param account 要快照的账户地址
-      * @return（可能的错误，代币余额，借入余额，汇率尾数）
       */
+    //  @return （可能的错误，代币余额，借入余额，汇率尾数）
 
     //  代币余额，借入余额，汇率尾数
     function getAccountSnapshot(address account) external view returns (uint, uint, uint, uint) {
@@ -265,7 +265,6 @@ contract CErc20Delegator is CTokenInterface, CErc20Interface, CDelegatorInterfac
     /**
       * @notice 返回当前每个区块的供应量/**
       * @notice 返回此 cToken 的当前每块借入利率
-      * @return 每个区块的借款利率，按 1e18 缩放
       *此 cToken 的价格
       * @return 每个区块的供应利率，按 1e18 缩放
       */
@@ -277,8 +276,8 @@ contract CErc20Delegator is CTokenInterface, CErc20Interface, CDelegatorInterfac
 
    /**
       * @notice 返回此 cToken 的当前每块供应利率
-      * @return 每个区块的供应利率，按 1e18 缩放
       */
+    //   * @return 每个区块的供应利率，按 1e18 缩放
     // 获取每个区块的供应利率
     function supplyRatePerBlock() external view returns (uint) {
         bytes memory data = delegateToViewImplementation(abi.encodeWithSignature("supplyRatePerBlock()"));
@@ -287,8 +286,8 @@ contract CErc20Delegator is CTokenInterface, CErc20Interface, CDelegatorInterfac
 
     /**
       * @notice 返回当前总借款加上应计利息
-      * @return 有息借款总额
       */
+    //   * @return 有息借款总额
     // 当前总贷款额度
     function totalBorrowsCurrent() external returns (uint) {
         bytes memory data = delegateToImplementation(abi.encodeWithSignature("totalBorrowsCurrent()"));
@@ -298,8 +297,8 @@ contract CErc20Delegator is CTokenInterface, CErc20Interface, CDelegatorInterfac
     /**
       * @notice 对更新的borrowIndex 产生利息，然后使用更新的borrowIndex 计算账户的借入余额
       * @param account 更新borrowIndex后需要计算余额的地址
-      * @return 计算的余额
       */
+    //   * @return 计算的余额
     function borrowBalanceCurrent(address account) external returns (uint) {
         bytes memory data = delegateToImplementation(abi.encodeWithSignature("borrowBalanceCurrent(address)", account));
         return abi.decode(data, (uint));
@@ -308,8 +307,8 @@ contract CErc20Delegator is CTokenInterface, CErc20Interface, CDelegatorInterfac
     /**
       * @notice 根据存储的数据返回账户的借入余额
       * @param account 需要计算余额的地址
-      * @return 计算的余额
       */
+    //   * @return 计算的余额
     //  获取输入用户的借款额度
     function borrowBalanceStored(address account) public view returns (uint) {
         bytes memory data = delegateToViewImplementation(abi.encodeWithSignature("borrowBalanceStored(address)", account));
@@ -318,8 +317,8 @@ contract CErc20Delegator is CTokenInterface, CErc20Interface, CDelegatorInterfac
 
    /**
       * @notice 累积利息然后返回最新汇率
-      * @return 按 1e18 比例计算的汇率
       */
+    //   * @return 按 1e18 比例计算的汇率
     // 最新存款汇率
     function exchangeRateCurrent() public returns (uint) {
         bytes memory data = delegateToImplementation(abi.encodeWithSignature("exchangeRateCurrent()"));
@@ -329,8 +328,8 @@ contract CErc20Delegator is CTokenInterface, CErc20Interface, CDelegatorInterfac
     /**
       * @notice 计算从底层证券到 CToken 的汇率
       * @dev 这个函数在计算汇率之前不会产生利息
-      * @return 按 1e18 比例计算的汇率
       */
+    //   * @return 按 1e18 比例计算的汇率
     //  获取存款汇率
     function exchangeRateStored() public view returns (uint) {
         bytes memory data = delegateToViewImplementation(abi.encodeWithSignature("exchangeRateStored()"));
@@ -339,8 +338,8 @@ contract CErc20Delegator is CTokenInterface, CErc20Interface, CDelegatorInterfac
 
     /**
       * @notice 获取该cToken在标的资产中的现金余额
-      * @return 该合约拥有的标的资产数量
       */
+    //   * @return 该合约拥有的标的资产数量
     function getCash() external view returns (uint) {
         bytes memory data = delegateToViewImplementation(abi.encodeWithSignature("getCash()"));
         return abi.decode(data, (uint));
@@ -464,8 +463,8 @@ contract CErc20Delegator is CTokenInterface, CErc20Interface, CDelegatorInterfac
       * @dev 无论实现返回或转发还原，它都会返回给外部调用者
       * @param callee 委托调用的合约
       * @param data 要委托调用的原始数据
-      * @return 委托调用返回的字节数
       */
+    //   * @return 委托调用返回的字节数
     function delegateTo(address callee, bytes memory data) internal returns (bytes memory) {
         (bool success, bytes memory returnData) = callee.delegatecall(data);
         // cconsole.log("success", success);
@@ -482,8 +481,8 @@ contract CErc20Delegator is CTokenInterface, CErc20Interface, CDelegatorInterfac
       * @notice 将执行委托给实现合约
       * @dev 无论实现返回或转发还原，它都会返回给外部调用者
       * @param data 要委托调用的原始数据
-      * @return 委托调用返回的字节数
       */
+    //   * @return 委托调用返回的字节数
     //  指定委托调用的方法
     function delegateToImplementation(bytes memory data) public returns (bytes memory) {
         return delegateTo(implementation, data);
@@ -494,8 +493,8 @@ contract CErc20Delegator is CTokenInterface, CErc20Interface, CDelegatorInterfac
       * @dev 无论实现返回或转发还原，它都会返回给外部调用者
       * 包装器返回数据中还有额外的 2 个前缀 uint，我们忽略它们，因为我们做了一个额外的跃点。
       * @param data 要委托调用的原始数据
-      * @return 委托调用返回的字节数
       */
+    //   * @return 委托调用返回的字节数
     function delegateToViewImplementation(bytes memory data) public view returns (bytes memory) {
         (bool success, bytes memory returnData) = address(this).staticcall(abi.encodeWithSignature("delegateToImplementation(bytes)", data));
         assembly {

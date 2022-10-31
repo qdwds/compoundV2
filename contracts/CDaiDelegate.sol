@@ -111,8 +111,8 @@ contract CDaiDelegate is CErc20Delegate {
     /**
     *@notice 获取此合同的基础余额
     *@dev 这不包括当前消息的值（如果有）
-    *@return 此合约拥有的基础代币数量
     */
+    // *@return 此合约拥有的基础代币数量
     function getCashPrior() internal view returns (uint) {
         PotLike pot = PotLike(potAddress);
         uint pie = pot.pie(address(this));

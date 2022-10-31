@@ -13,18 +13,24 @@ import "./InterestRateModel.sol";
 // y = k2*(x - p) + (k*p + b)
 contract JumpRateModelV2 is InterestRateModel, BaseJumpRateModelV2  {
 
-	/**
-     * @notice Calculates the current borrow rate per block
-     * @param cash The amount of cash in the market
-     * @param borrows The amount of borrows in the market
-     * @param reserves The amount of reserves in the market
-     * @return The borrow rate percentage per block as a mantissa (scaled by 1e18)
-     */
+	  /**
+      * @notice 计算当前每个区块的借贷利率
+      * @param cash 市场上的现金数量
+      * @param borrows 市场上的借款数量
+      * @param reserves 市场上的准备金数量
+      */
+      // * @return 以尾数表示的每个区块的借款利率百分比（按 1e18 缩放）
     // 计算当前借款利率
     function getBorrowRate(uint cash, uint borrows, uint reserves) external view returns (uint) {
         return getBorrowRateInternal(cash, borrows, reserves);
     }
 
-    constructor(uint baseRatePerYear, uint multiplierPerYear, uint jumpMultiplierPerYear, uint kink_, address owner_) 
+    constructor(
+      uint baseRatePerYear,
+      uint multiplierPerYear,
+      uint jumpMultiplierPerYear,
+      uint kink_,
+      address owner_
+    ) 
     	BaseJumpRateModelV2(baseRatePerYear,multiplierPerYear,jumpMultiplierPerYear,kink_,owner_) public {}
 }
