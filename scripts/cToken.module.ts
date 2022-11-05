@@ -66,6 +66,11 @@ export const cToken__setReserveFactor = async(CErc20DelegatorAddress:string)=>{
 //     await cToken._supportMarket(tokenAddress);  //  把该token加入到市场中
 // }
 
+/**
+ * 代币加入到市场中
+ * @param comptrollerG7Address 
+ * @param cErc20DelegatorAddress 
+ */
 export const cErc20Delegator_supportMarket = async (comptrollerG7Address:string, cErc20DelegatorAddress:string) => {
     const cToken = await ethers.getContractAt("ComptrollerG7",comptrollerG7Address);
     await cToken._supportMarket(cErc20DelegatorAddress);  //  把该token加入到市场中

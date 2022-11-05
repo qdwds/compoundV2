@@ -228,10 +228,10 @@ contract CErc20Delegator is CTokenInterface, CErc20Interface, CDelegatorInterfac
     }
 
     /**
-     * @notice Get the token balance of the `owner`
-     * @param owner The address of the account to query
-     * @return The number of tokens owned by `owner`
-     */
+      * @notice 获取`owner`的代币余额
+      * @param owner 要查询的账户地址
+      * @return `owner` 拥有的代币数量
+      */
     function balanceOf(address owner) external view returns (uint) {
         bytes memory data = delegateToViewImplementation(abi.encodeWithSignature("balanceOf(address)", owner));
         return abi.decode(data, (uint));

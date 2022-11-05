@@ -5,8 +5,8 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract ERC20Token is ERC20, ERC20Burnable, Ownable {
-    constructor() ERC20("COMP USD", "cUSD") {
-        _mint(msg.sender, 100000000000000 * uint(10 ** 18));
+contract USDTToken is ERC20, ERC20Burnable, Ownable {
+    constructor() ERC20("USDT Token", "USDT") {
+        _mint(msg.sender, 100000000 * 10 * 188);
     }
 }

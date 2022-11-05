@@ -11,7 +11,7 @@ contract ComptrollerErrorReporter {
         INVALID_COLLATERAL_FACTOR,
         INVALID_LIQUIDATION_INCENTIVE,
         MARKET_NOT_ENTERED, // no longer possible
-        MARKET_NOT_LISTED,
+        MARKET_NOT_LISTED,  //  代币没有上市
         MARKET_ALREADY_LISTED,
         MATH_ERROR,
         NONZERO_BORROW_BALANCE,

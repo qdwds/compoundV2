@@ -67,6 +67,7 @@ contract CTokenStorage {
 
     /**
      * @notice Fraction of interest currently set aside for reserves
+     * 目前为准备金预留的利息分数
      * 储备金的利率？？
      */
     uint public reserveFactorMantissa;
@@ -79,6 +80,7 @@ contract CTokenStorage {
     /**
      * @notice 自市场开放以来总赚取利率的累计值()
      * 初始化为 1e18
+     * 指标
      */
     uint public borrowIndex;
 
@@ -267,10 +269,13 @@ contract CErc20Storage {
 contract CErc20Interface is CErc20Storage {
 
     /*** User Interface ***/
-
+    // 存款
     function mint(uint mintAmount) external returns (uint);
+    // 取款
     function redeem(uint redeemTokens) external returns (uint);
+    // 取指定额度
     function redeemUnderlying(uint redeemAmount) external returns (uint);
+    // 借款
     function borrow(uint borrowAmount) external returns (uint);
     function repayBorrow(uint repayAmount) external returns (uint);
     function repayBorrowBehalf(address borrower, uint repayAmount) external returns (uint);

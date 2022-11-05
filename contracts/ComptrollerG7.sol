@@ -241,6 +241,7 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
         mintAmount; //  名称
 
         // 检查对应资产是否上市
+        console.log("代币上市", markets[cToken].isListed);
         if (!markets[cToken].isListed) {
             return uint(Error.MARKET_NOT_LISTED);   //  error：市场没有上市
         }
@@ -381,8 +382,8 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
         // 检查当前账户是否有资产
         if (!markets[cToken].accountMembership[borrower]) {
             // 如果借款人不在市场上，只有cToken可以调用borrowAllowed
-            console.log("msg.sender", msg.sender);
-            console.log("cToken", cToken);
+            // console.log("msg.sender", msg.sender);
+            // console.log("cToken", cToken);
             require(msg.sender == cToken, "sender must be cToken");
 
             // attempt to add borrower to the market
@@ -1028,7 +1029,7 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
 
         // Set liquidation incentive to new incentive
         liquidationIncentiveMantissa = newLiquidationIncentiveMantissa;
-        console.log("liquidationIncentiveMantissa", liquidationIncentiveMantissa);
+        // console.log("liquidationIncentiveMantissa", liquidationIncentiveMantissa);
         // Emit event with old incentive, new incentive
         emit NewLiquidationIncentive(oldLiquidationIncentiveMantissa, newLiquidationIncentiveMantissa);
 
@@ -1036,37 +1037,46 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
     }
 
     /**
-      * @notice Add the market to the markets mapping and set it as listed
-      * @dev Admin function to set isListed and add support for the market
-      * @param cToken The address of the market (token) to list
-      * @return uint 0=success, otherwise a failure. (See enum Error for details)
-      */
+       * @notice 将市场添加到市场映射并将其设置为列出
+       * @dev 管理员功能设置 isListed 并添加对市场的支持
+       * @param cToken 要上市的市场（token）地址
+       * @return uint 0=成功，否则失败。 （详见枚举错误）
+       */
     //  
     function _supportMarket(CToken cToken) external returns (uint) {
+        // 只有管理员才能开启上市
         if (msg.sender != admin) {
             return fail(Error.UNAUTHORIZED, FailureInfo.SUPPORT_MARKET_OWNER_CHECK);
         }
-
+        // 已经上市 返回错误
         if (markets[address(cToken)].isListed) {
             return fail(Error.MARKET_ALREADY_LISTED, FailureInfo.SUPPORT_MARKET_EXISTS);
         }
 
+        // 检查是否为cToken
         cToken.isCToken(); // Sanity check to make sure its really a CToken
 
         // Note that isComped is not in active use anymore
-        markets[address(cToken)] = Market({isListed: true, isComped: false, collateralFactorMantissa: 0});
-
+        markets[address(cToken)] = Market({
+            isListed: true, //  上市
+            isComped: false,
+            collateralFactorMantissa: 0    //  抵押率
+        });
+        console.log(address(cToken));
+        // 添加到市场中
         _addMarketInternal(address(cToken));
 
         emit MarketListed(cToken);
 
         return uint(Error.NO_ERROR);
     }
-
+    // 添加cToken到市场中
     function _addMarketInternal(address cToken) internal {
+        // 循环所有市场 存在的话报错是为了防止重复添加
         for (uint i = 0; i < allMarkets.length; i ++) {
             require(allMarkets[i] != CToken(cToken), "market already added");
         }
+        // 添加到市场
         allMarkets.push(CToken(cToken));
     }
 
@@ -1480,11 +1490,11 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
         emit ContributorCompSpeedUpdated(contributor, compSpeed);
     }
 
-    /**
-     * @notice Return all of the markets
-     * @dev The automatic getter may be used to access an individual market.
-     * @return The list of market addresses
-     */
+   /**
+      * @notice 返回所有市场
+      * @dev 自动获取器可用于访问单个市场。
+      * @return 市场地址列表
+      */
     function getAllMarkets() public view returns (CToken[] memory) {
         return allMarkets;
     }
@@ -1498,6 +1508,6 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
      * @return The address of COMP
      */
     function getCompAddress() public pure returns (address) {
-        return /**start*/0x286B8DecD5ED79c962b2d8F4346CD97FF0E2C352/**end*/;
+        return /**start*/0x74Df809b1dfC099E8cdBc98f6a8D1F5c2C3f66f8/**end*/;
     }
 }

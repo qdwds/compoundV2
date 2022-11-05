@@ -7,6 +7,7 @@ import { unitollerDeploy, comptrollerG7Deploy, unitoller__setPendingImplementati
 import { erc20TokenDeploy, CErc20DelegateDeploy, cErc20DelegatorDeploy, cToken__setReserveFactor, cErc20Delegator_supportMarket } from "./cToken.module";
 import { jumpRateModelV2Deploy } from "./interestRate.module";
 import { simplePriceOracleDeploy, simplePriceOracle_setUnderlyingPrice } from "./priceOracle.module";
+import { USDTTokenDeploy } from "./tokens.module";
 
 async function main() {
   const signer = await ethers.provider.getSigner();
@@ -41,7 +42,10 @@ async function main() {
 
 
   const erc20Token = await erc20TokenDeploy();  //  不在compound合约中
+  console.log(await erc20Token.totalSupply())
   const cErc20Delegate = await CErc20DelegateDeploy();
+  // erc20Token 真实token 兑换 cerc20Token
+  // 该方法就是 用token 还ctoken， 只能是传入的token兑换，其他token无法兑换
   const cErc20Delegator = await cErc20DelegatorDeploy(erc20Token.address, unitoller.address, cTokenJumpRateModelV2.address, owner, cErc20Delegate.address)
 
   const cEther = await cEtherDeploy(unitoller.address, etherJumpRateModelV2.address, owner);
@@ -58,11 +62,17 @@ async function main() {
 
   // 加入市场
   await cErc20Delegator_supportMarket(comptrollerG7.address, cErc20Delegator.address);
+  // await cErc20Delegator_supportMarket(comptrollerG7.address, erc20Token.address);
   await cEther__supportMarket(comptrollerG7.address, cEther.address);
 
   // 设置抵押率
   await comptrollerG7__setCollateralFactor(comptrollerG7.address, cErc20Delegator.address);
 
+
+
+
+  // tokens
+  const usdt = await USDTTokenDeploy();
 
   const info = {
     comp: comp.address,
@@ -75,6 +85,7 @@ async function main() {
     cErc20Delegate: cErc20Delegate.address,
     cErc20Delegator: cErc20Delegator.address,
     cEther: cEther.address,
+    usdt: usdt.address
 
   }
 

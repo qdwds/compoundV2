@@ -40,8 +40,8 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         
         // 市场只能初始化一次
         // 校验 上一次计算利息区块和市场开放以来的累计值 都为0
-        console.log("accrualBlockNumber", accrualBlockNumber);
-        console.log("borrowIndex", borrowIndex);
+        // console.log("accrualBlockNumber", accrualBlockNumber);
+        // console.log("borrowIndex", borrowIndex);
         require(accrualBlockNumber == 0 && borrowIndex == 0, "market may only be initialized once");
 
         // 通过传入的利率来 设置初始汇率
@@ -211,6 +211,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
      * @param owner The address of the account to query
      * @return The number of tokens owned by `owner`
      */
+    // 当前账户的存款余额
     function balanceOf(address owner) external view returns (uint256) {
         return accountTokens[owner];
     }
@@ -225,10 +226,10 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     function balanceOfUnderlying(address owner) external returns (uint) {
         // 获取最新汇率
         Exp memory exchangeRate = Exp({mantissa: exchangeRateCurrent()});
-        console.log("exchangeRate 最新汇率", exchangeRate.mantissa);
+        // console.log("exchangeRate 最新汇率", exchangeRate.mantissa);
         // 最新汇率  用户余额
         (MathError mErr, uint balance) = mulScalarTruncate(exchangeRate, accountTokens[owner]);
-        console.log("balance", balance);
+        // console.log("balance", balance);
         require(mErr == MathError.NO_ERROR, "balance could not be calculated");
         return balance;
     }
@@ -242,7 +243,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     function getAccountSnapshot(address account) external view returns (uint, uint, uint, uint) {
         // 用户余额
         uint cTokenBalance = accountTokens[account];
-        console.log("cTokenBalance", cTokenBalance);
+        // console.log("cTokenBalance", cTokenBalance);
         uint borrowBalance; //  当前用户借款额度
         uint exchangeRateMantissa;  //  当前用户的存款汇率
 
@@ -250,18 +251,18 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
 
         // 获取用户借款额度
         (mErr, borrowBalance) = borrowBalanceStoredInternal(account);
-        console.log("borrowBalance 用户借款额度", borrowBalance);
+        // console.log("borrowBalance 用户借款额度", borrowBalance);
         if (mErr != MathError.NO_ERROR) {
             return (uint(Error.MATH_ERROR), 0, 0, 0);
         }
         // 获取存款汇率
         (mErr, exchangeRateMantissa) = exchangeRateStoredInternal();
-        console.log("exchangeRateMantissa 存款汇率", exchangeRateMantissa);
+        // console.log("exchangeRateMantissa 存款汇率", exchangeRateMantissa);
         if (mErr != MathError.NO_ERROR) {
             return (uint(Error.MATH_ERROR), 0, 0, 0);
         }
 
-        console.log("exchangeRateMantissa",exchangeRateMantissa);
+        // console.log("exchangeRateMantissa",exchangeRateMantissa);
         return (uint(Error.NO_ERROR), cTokenBalance, borrowBalance, exchangeRateMantissa);
     }
 
@@ -290,7 +291,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     //  每个区块的供应利率
     function supplyRatePerBlock() external view returns (uint) {
         // 调用传入利率模型合约的方法计算 还款利率 总借入  总储备量 市场储备资金
-        console.log("reserveFactorMantissa", reserveFactorMantissa);
+        // console.log("reserveFactorMantissa", reserveFactorMantissa);
         return interestRateModel.getSupplyRate(getCashPrior(), totalBorrows, totalReserves, reserveFactorMantissa);
     }
 
@@ -303,7 +304,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     function totalBorrowsCurrent() external nonReentrant returns (uint) {
         // 计算累积列率时候不能报错
         require(accrueInterest() == uint(Error.NO_ERROR), "accrue interest failed");
-        console.log("totalBorrows", totalBorrows);
+        // console.log("totalBorrows", totalBorrows);
         return totalBorrows;
     }
 
@@ -346,8 +347,8 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         // /* Get borrowBalance and borrowIndex */
         // 获取用户借款余额和借款指数
         BorrowSnapshot storage borrowSnapshot = accountBorrows[account];
-        console.log("borrowSnapshot.principal", borrowSnapshot.principal);
-        console.log("borrowSnapshot.principal", borrowSnapshot.interestIndex);
+        // console.log("borrowSnapshot.principal", borrowSnapshot.principal);
+        // console.log("borrowSnapshot.principal", borrowSnapshot.interestIndex);
         /* If borrowBalance = 0 then borrowIndex is likely also 0.
          * Rather than failing the calculation with a division by 0, we immediately return 0 in this case.
          */
@@ -423,22 +424,22 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             uint cashPlusBorrowsMinusReserves;
             Exp memory exchangeRate;
             MathError mathErr;
-            console.log("totalCash", totalCash);
-            console.log("totalBorrows", totalBorrows);
-            console.log("totalReserves", totalReserves);
+            // console.log("totalCash", totalCash);
+            // console.log("totalBorrows", totalBorrows);
+            // console.log("totalReserves", totalReserves);
             //  totalCash + totalBorrows - totalReserves
             // 资金池余额 + 借款总量 - 总储备量
             (mathErr, cashPlusBorrowsMinusReserves) = addThenSubUInt(totalCash, totalBorrows, totalReserves);
             if (mathErr != MathError.NO_ERROR) {
                 return (mathErr, 0);
             }
-            console.log("cashPlusBorrowsMinusReserves", cashPlusBorrowsMinusReserves);
+            // console.log("cashPlusBorrowsMinusReserves", cashPlusBorrowsMinusReserves);
             //  / 流通量总数
             (mathErr, exchangeRate) = getExp(cashPlusBorrowsMinusReserves, _totalSupply);
             if (mathErr != MathError.NO_ERROR) {
                 return (mathErr, 0);
             }
-            console.log("exchangeRate 存款汇率", exchangeRate.mantissa);
+            // console.log("exchangeRate 存款汇率", exchangeRate.mantissa);
             return (MathError.NO_ERROR, exchangeRate.mantissa);
         }
     }
@@ -574,6 +575,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     * @dev 除非还原，否则无论操作是否成功都会产生利息
     * @param mintAmount 要供应的基础资产的金额
     */
+//    指定token兑换cToken
     // * @return（uint，uint）错误代码（0=成功，否则为失败，请参阅ErrorReporter.sol）和实际的薄荷金额。
     function mintInternal(uint mintAmount) internal nonReentrant returns (uint, uint) {
         // 计算累计利率
@@ -605,9 +607,12 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     */
     //  计算能铸造多少代币
     function mintFresh(address minter, uint mintAmount) internal returns (uint, uint) {
+        
         /* Fail if mint not allowed */
         // 检查是否允许铸币 代币是否上市
+        console.log(address(this));
         uint allowed = comptroller.mintAllowed(address(this), minter, mintAmount);
+        console.log("isAllowed", allowed);
         // 这里居然检查的不是error.noerror
         if (allowed != 0) {
             return (failOpaque(Error.COMPTROLLER_REJECTION, FailureInfo.MINT_COMPTROLLER_REJECTION, allowed), 0);

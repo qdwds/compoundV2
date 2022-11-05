@@ -75,7 +75,7 @@ contract ComptrollerV2Storage is ComptrollerV1Storage {
         //  检查当前账户是否有资产
         mapping(address => bool) accountMembership;
 
-        /// @notice Whether or not this market receives COMP
+        /// @notice 该市场是否收到 = 是否开启奖励
         bool isComped;
     }
 
@@ -117,7 +117,7 @@ contract ComptrollerV3Storage is ComptrollerV2Storage {
         uint32 block;
     }
 
-    /// @notice A list of all markets
+    /// @notice 所有市场的列表
     CToken[] public allMarkets;
 
     /// @notice The rate at which the flywheel distributes COMP, per block
