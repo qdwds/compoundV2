@@ -42,7 +42,6 @@ async function main() {
 
 
   const erc20Token = await erc20TokenDeploy();  //  不在compound合约中
-  console.log(await erc20Token.totalSupply())
   const cErc20Delegate = await CErc20DelegateDeploy();
   // erc20Token 真实token 兑换 cerc20Token
   // 该方法就是 用token 还ctoken， 只能是传入的token兑换，其他token无法兑换
@@ -62,7 +61,6 @@ async function main() {
 
   // 加入市场
   await cErc20Delegator_supportMarket(comptrollerG7.address, cErc20Delegator.address);
-  // await cErc20Delegator_supportMarket(comptrollerG7.address, erc20Token.address);
   await cEther__supportMarket(comptrollerG7.address, cEther.address);
 
   // 设置抵押率

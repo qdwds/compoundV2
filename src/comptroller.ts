@@ -18,12 +18,29 @@ export const comptrollerG7__supportMarket = async (cToken:string) =>{
     console.log(a.events);
 }
 
-
+/**
+ * 用户把代币进入市场
+ * @param cTokens 
+ */
 export const comptrollerG7_enterMarkets = async (cTokens: Array<string>) => {
     const { compoundG7 } = await createContracts();
     await compoundG7.enterMarkets(cTokens).catch(err => console.log(err));
+    await comptrollerG7_getAssetsIn();
 }
 
+/**
+ * 获取用户加入市场的代币
+ * @param owner 
+ */
+export const comptrollerG7_getAssetsIn = async (owner?:string) => {
+    const { compoundG7, signer } = await createContracts();
+    const reserves = await compoundG7.getAssetsIn(owner||signer.address);
+    console.log("用户加入市场的代币",reserves)
+
+
+
+    
+}
 const main = async () => {
 
 }

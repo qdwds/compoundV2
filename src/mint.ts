@@ -34,6 +34,8 @@ export const cErc20Store =async () => {
     console.log("当前账户的存款余额", formatUnits(await cErc20Delegator.balanceOf(signer.address)))
     console.log("当前账户的供应存款余额", (await cErc20Delegator.balanceOfUnderlying(signer.address)))
     console.log("该合约拥有的标的资产数量", (await cErc20Delegator.getCash()))
+    console.log("市场借款总额度",await cErc20Delegator.totalBorrowsCurrent())
+
     console.log("当前存在的市场",await compoundG7.getAllMarkets())
 
 
@@ -49,14 +51,21 @@ export const cErc20Store =async () => {
 const main = async () => {
     const { cErc20Delegator, erc20Token, compoundG7 } = await createContracts();
     console.log("当前存在的市场",await compoundG7.getAllMarkets())
+    // 检查代币是否上市
+    console.log(await compoundG7.markets(address.cErc20Delegator));
+    console.log(await compoundG7.markets(address.cEther));
     // 加入市场
     // await comptrollerG7__supportMarket(cErc20Delegator.address);
 
-    //  类似交易对？？  token <=> cToken
-    await comptrollerG7_enterMarkets([ cErc20Delegator.address])
+    // 用户把代币加入市场
+    await comptrollerG7_enterMarkets([address.cErc20Delegator, address.cEther])
     
     await mint();
 
     await cErc20Store();
+
+
+
+
 }
 main();

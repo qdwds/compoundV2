@@ -6,7 +6,7 @@ contract ComptrollerInterface {
     bool public constant isComptroller = true;
 
     /*** Assets You Are In ***/
-
+    // 用户资产操作
     function enterMarkets(address[] calldata cTokens) external returns (uint[] memory);
     function exitMarket(address cToken) external returns (uint);
 

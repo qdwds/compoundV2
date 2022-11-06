@@ -3,11 +3,20 @@ dotenv.config();
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 
+
 const config: HardhatUserConfig = {
 	defaultNetwork: "localhost",
 	networks: {
 		localhost: {
 			from: "http://127.0.0.1:8545/",
+		},
+		oke:{
+			url:"https://exchaintestrpc.okex.org",
+			accounts:[process.env.OKE_PRIVATE_KEY!]
+		},
+		matic:{
+			url:"https://polygon-testnet.public.blastapi.io",
+			accounts:[process.env.OKE_PRIVATE_KEY!]
 		}
 	},
 	solidity: {

@@ -134,16 +134,17 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
     function addToMarketInternal(CToken cToken, address borrower) internal returns (Error) {
         // 用户cToken的资产数量
         Market storage marketToJoin = markets[address(cToken)];
-
+        // console.log("sshagnshi",marketToJoin.isListed);
         // 检查代币是否上市
         if (!marketToJoin.isListed) {
             // market is not listed, cannot join
             return Error.MARKET_NOT_LISTED;
         }
 
-        // 检查当前cToken是否加入到市场
+        // 检查当前账户是否有资产
         if (marketToJoin.accountMembership[borrower] == true) {
             // already joined
+            // 已经加入
             return Error.NO_ERROR;
         }
 
@@ -856,22 +857,22 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
                 // redeem effect
                 // sumBorrowPlusEffects += tokensToDenom * redeemTokens
                 vars.sumBorrowPlusEffects = mul_ScalarTruncateAddUInt(vars.tokensToDenom, redeemTokens, vars.sumBorrowPlusEffects);
-                console.log("vars.sumBorrowPlusEffects", vars.sumBorrowPlusEffects);
+                // console.log("vars.sumBorrowPlusEffects", vars.sumBorrowPlusEffects);
                 // borrow effect
                 // sumBorrowPlusEffects += oraclePrice * borrowAmount
                 vars.sumBorrowPlusEffects = mul_ScalarTruncateAddUInt(vars.oraclePrice, borrowAmount, vars.sumBorrowPlusEffects);
-                console.log("vars.sumBorrowPlusEffects", vars.sumBorrowPlusEffects);
+                // console.log("vars.sumBorrowPlusEffects", vars.sumBorrowPlusEffects);
             }
         }
 
         // These are safe, as the underflow condition is checked first
-        console.log("vars.sumCollateral > vars.sumBorrowPlusEffects","总抵押额度", vars.sumCollateral);
-        console.log( "总借款额度",vars.sumBorrowPlusEffects);
+        // console.log("vars.sumCollateral > vars.sumBorrowPlusEffects","总抵押额度", vars.sumCollateral);
+        // console.log( "总借款额度",vars.sumBorrowPlusEffects);
         if (vars.sumCollateral > vars.sumBorrowPlusEffects) {
-            console.log("vars.sumCollateral - vars.sumBorrowPlusEffects, 0", vars.sumCollateral - vars.sumBorrowPlusEffects, 0);
+            // console.log("vars.sumCollateral - vars.sumBorrowPlusEffects, 0", vars.sumCollateral - vars.sumBorrowPlusEffects, 0);
             return (Error.NO_ERROR, vars.sumCollateral - vars.sumBorrowPlusEffects, 0);
         } else {
-            console.log("0, vars.sumBorrowPlusEffects - vars.sumCollateral", 0, vars.sumBorrowPlusEffects - vars.sumCollateral);
+            // console.log("0, vars.sumBorrowPlusEffects - vars.sumCollateral", 0, vars.sumBorrowPlusEffects - vars.sumCollateral);
             return (Error.NO_ERROR, 0, vars.sumBorrowPlusEffects - vars.sumCollateral);
         }
     }
@@ -962,7 +963,7 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
 
         uint oldCloseFactorMantissa = closeFactorMantissa;
         closeFactorMantissa = newCloseFactorMantissa;
-        console.log("closeFactorMantissa", closeFactorMantissa);
+        // console.log("closeFactorMantissa", closeFactorMantissa);
         emit NewCloseFactor(oldCloseFactorMantissa, closeFactorMantissa);
 
         return uint(Error.NO_ERROR);
@@ -1048,6 +1049,8 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
         if (msg.sender != admin) {
             return fail(Error.UNAUTHORIZED, FailureInfo.SUPPORT_MARKET_OWNER_CHECK);
         }
+        console.log(address(cToken));
+        console.log("shi", markets[address(cToken)].isListed);
         // 已经上市 返回错误
         if (markets[address(cToken)].isListed) {
             return fail(Error.MARKET_ALREADY_LISTED, FailureInfo.SUPPORT_MARKET_EXISTS);
@@ -1062,7 +1065,7 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
             isComped: false,
             collateralFactorMantissa: 0    //  抵押率
         });
-        console.log(address(cToken));
+        console.log( markets[address(cToken)].isListed);
         // 添加到市场中
         _addMarketInternal(address(cToken));
 
@@ -1508,6 +1511,6 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
      * @return The address of COMP
      */
     function getCompAddress() public pure returns (address) {
-        return /**start*/0x74Df809b1dfC099E8cdBc98f6a8D1F5c2C3f66f8/**end*/;
+        return /**start*/0x4ed7c70F96B99c776995fB64377f0d4aB3B0e1C1/**end*/;
     }
 }
