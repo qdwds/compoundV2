@@ -13,8 +13,12 @@ import { ethers } from "hardhat";
  * 把对应的token存入合约中，兑换处指定数量的cToken
  */
 const mint = async () => {
-    const { cErc20Delegator, erc20Token } = await createContracts();
+    const { cErc20Delegator, erc20Token,signer, compoundG7} = await createContracts();
     await erc20Token.approve(cErc20Delegator.address, ethers.constants.MaxUint256)
+    console.log("my token",await erc20Token.allowance(signer.address, cErc20Delegator.address))
+    console.log(await erc20Token.balanceOf(signer.address))
+    console.log(await erc20Token.balanceOf(cErc20Delegator.address))
+    console.log(await erc20Token.balanceOf(compoundG7.address))
     const tx = await cErc20Delegator.mint(parseUnits("1000"));
     console.log(tx)
 }
@@ -50,15 +54,19 @@ export const cErc20Store =async () => {
 
 const main = async () => {
     const { cErc20Delegator, erc20Token, compoundG7 } = await createContracts();
-    console.log("当前存在的市场",await compoundG7.getAllMarkets())
+    // console.log("当前存在的市场",await compoundG7.getAllMarkets())
     // 检查代币是否上市
-    console.log(await compoundG7.markets(address.cErc20Delegator));
-    console.log(await compoundG7.markets(address.cEther));
-    // 加入市场
+    // console.log(await compoundG7.markets(address.cErc20Delegator));
+    // console.log(await compoundG7.markets(address.cEther));
+    // 加入市场  为什么不报错  ？？？？？？？？？？？？
+    await comptrollerG7__supportMarket(cErc20Delegator.address);
     // await comptrollerG7__supportMarket(cErc20Delegator.address);
-
+    // await comptrollerG7__supportMarket(cErc20Delegator.address);
+    // await comptrollerG7__supportMarket(cErc20Delegator.address);
+    // await comptrollerG7__supportMarket(cErc20Delegator.address);
+    console.log("getCompAddress",await compoundG7.getCompAddress())
     // 用户把代币加入市场
-    await comptrollerG7_enterMarkets([address.cErc20Delegator, address.cEther])
+    // await comptrollerG7_enterMarkets([address.cErc20Delegator, address.cEther])
     
     await mint();
 

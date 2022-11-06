@@ -14,8 +14,6 @@ export const comptrollerStore = async () => {
 export const comptrollerG7__supportMarket = async (cToken:string) =>{
     const { compoundG7 } = await createContracts();
     const tx = await compoundG7._supportMarket(cToken).catch(err => console.log(err));
-    const a = await tx.wait();
-    console.log(a.events);
 }
 
 /**

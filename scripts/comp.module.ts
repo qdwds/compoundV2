@@ -20,7 +20,7 @@ export const compTokenDeploy = async():Promise<Contract>=>{
 
 
 export const setCompAddress = async (address:string) => {
-    const path = join(__dirname,"../contracts/ComptrollerG7.sol");
+    const path = join(__dirname,"../contracts/Comptroller.sol");
     readFile(path,"utf-8",(err, data)=>{
         if(err != null)return console.log(err);
         const context = data.replace(/\/\*\*start\*\/(\S+)\/\*\*end\*\//,`/**start*/${address}/**end*/`)

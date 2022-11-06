@@ -15,11 +15,13 @@ async function main() {
 
   // Comp token 合约
   const comp = await compTokenDeploy();
+
   await setCompAddress(comp.address); //  set comp token address 
   // 代理合约
   const unitoller = await unitollerDeploy();
   //  控制合约
   const comptrollerG7 = await comptrollerG7Deploy();
+
   // 预言机
   const simplePriceOracle = await simplePriceOracleDeploy();
 
@@ -65,7 +67,6 @@ async function main() {
 
   // 设置抵押率
   await comptrollerG7__setCollateralFactor(comptrollerG7.address, cErc20Delegator.address);
-
 
 
 

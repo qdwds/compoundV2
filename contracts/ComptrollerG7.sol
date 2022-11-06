@@ -241,7 +241,8 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
         minter; //  铸币
         mintAmount; //  名称
 
-        // 检查对应资产是否上市
+        // 检查对应资产是否上市 ????????????????
+        // 明明已经上市，为什么到这里数据是没有上市？？？？？？？？？？
         console.log("代币上市", markets[cToken].isListed);
         if (!markets[cToken].isListed) {
             return uint(Error.MARKET_NOT_LISTED);   //  error：市场没有上市
@@ -1049,22 +1050,28 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
         if (msg.sender != admin) {
             return fail(Error.UNAUTHORIZED, FailureInfo.SUPPORT_MARKET_OWNER_CHECK);
         }
-        console.log(address(cToken));
         console.log("shi", markets[address(cToken)].isListed);
         // 已经上市 返回错误
         if (markets[address(cToken)].isListed) {
+            console.log("已经上市");
             return fail(Error.MARKET_ALREADY_LISTED, FailureInfo.SUPPORT_MARKET_EXISTS);
         }
 
         // 检查是否为cToken
         cToken.isCToken(); // Sanity check to make sure its really a CToken
 
+        // // Note that isComped is not in active use anymore
+        // markets[address(cToken)] = Market({
+        //     isListed: true, //  上市
+        //     isComped: false,
+        //     collateralFactorMantissa: 0    //  抵押率
+        // });
         // Note that isComped is not in active use anymore
-        markets[address(cToken)] = Market({
-            isListed: true, //  上市
-            isComped: false,
-            collateralFactorMantissa: 0    //  抵押率
-        });
+        Market storage market = markets[address(cToken)];
+        market.isListed = true;
+        market.isComped = false;
+        market.collateralFactorMantissa = 0;
+        
         console.log( markets[address(cToken)].isListed);
         // 添加到市场中
         _addMarketInternal(address(cToken));
@@ -1511,6 +1518,6 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
      * @return The address of COMP
      */
     function getCompAddress() public pure returns (address) {
-        return /**start*/0x4ed7c70F96B99c776995fB64377f0d4aB3B0e1C1/**end*/;
+        return /**start*/0x6b39b761b1b64C8C095BF0e3Bb0c6a74705b4788/**end*/;
     }
 }
