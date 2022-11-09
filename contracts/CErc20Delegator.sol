@@ -129,10 +129,10 @@ contract CErc20Delegator is CTokenInterface, CErc20Interface, CDelegatorInterfac
     }
 
     /**
-      * @notice Sender borrows assets from the protocol to their own address
-      * @param borrowAmount The amount of the underlying asset to borrow
-      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
-      */
+       * @notice 发件人从协议中借用资产到他们自己的地址
+       * @param borrowAmount 要借入的标的资产的数量
+       * @return uint 0=成功，否则失败（详见ErrorReporter.sol）
+       */
     //  借款
     // 根据用户抵押资产来计算能兑换多少可借额度。借款成功会将资产池中的资产转入调用者钱包中。
     function borrow(uint borrowAmount) external returns (uint) {

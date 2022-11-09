@@ -164,12 +164,12 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
     }
 
     /**
-     * @notice Removes asset from sender's account liquidity calculation
-     * @dev Sender must not have an outstanding borrow balance in the asset,
-     *  or be providing necessary collateral for an outstanding borrow.
-     * @param cTokenAddress The address of the asset to be removed
-     * @return Whether or not the account successfully exited the market
-     */
+      * @notice 从发件人的账户流动性计算中删除资产
+      * @dev 发件人不得在资产中有未偿还的借款余额，
+      * 或为未偿还的借款提供必要的抵押品。
+      * @param cTokenAddress 要移除的资产地址
+      * @return 账户是否成功退市
+      */
     function exitMarket(address cTokenAddress) external returns (uint) {
         CToken cToken = CToken(cTokenAddress);
         /* Get sender tokensHeld and amountOwed underlying from the cToken */
@@ -226,9 +226,9 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
 
     /**
     * @notice 检查帐户是否应被允许在给定的市场中造币
-    * @param cToken验证造币厂的市场
-    * @param minter将获得铸造代币的帐户
-    * @param mintAmount提供给市场以换取代币的基础金额
+    * @param cToken 验证造币厂的市场
+    * @param minter 将获得铸造代币的帐户
+    * @param mintAmount 提供给市场以换取代币的基础金额
     * 如果允许使用mint，@return 0，否则是一个半透明的错误代码（请参阅ErrorReporter.sol）
     */
     function mintAllowed(address cToken, address minter, uint mintAmount) external returns (uint) {
@@ -258,12 +258,12 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
     }
 
     /**
-     * @notice Validates mint and reverts on rejection. May emit logs.
-     * @param cToken Asset being minted
-     * @param minter The address minting the tokens
-     * @param actualMintAmount The amount of the underlying asset being minted
-     * @param mintTokens The number of tokens being minted
-     */
+      * @notice 验证薄荷并在拒绝时恢复。 可能会发出日志。
+      * @param cToken 资产被铸造
+      * @param minter 铸造代币的地址
+      * @param actualMintAmount 被铸造的标的资产的数量
+      * @param mintTokens 正在铸造的代币数量
+      */
     function mintVerify(address cToken, address minter, uint actualMintAmount, uint mintTokens) external {
         // Shh - currently unused
         cToken;
@@ -279,8 +279,8 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
 
     /**
     * @notice 检查账户是否应被允许在给定市场兑换代币
-    * @param cToken验证兑换的市场
-    * @param 兑换者兑换代币的账户
+    * @param cToken 验证兑换的市场
+    * @param redeemer 兑换者兑换代币的账户
     * @param redeemTokens 要在市场中交换基础资产的cTokens数量
     *如果允许兑换，@return 0，否则是一个半透明的错误代码（请参阅ErrorReporter.sol）
     */
@@ -469,7 +469,8 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
         address cToken,
         address payer,
         address borrower,
-        uint repayAmount) external returns (uint) {
+        uint repayAmount
+    ) external returns (uint) {
         // Shh - currently unused
         payer;
         borrower;
@@ -492,18 +493,20 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
     }
 
     /**
-     * @notice Validates repayBorrow and reverts on rejection. May emit logs.
-     * @param cToken Asset being repaid
-     * @param payer The address repaying the borrow
-     * @param borrower The address of the borrower
-     * @param actualRepayAmount The amount of underlying being repaid
-     */
+      * @notice 验证 repayBorrow 并在拒绝时恢复。 可能会发出日志。
+      * @param cToken 资产被偿还
+      * @param payer 还款地址
+      * @param borrower 借款人地址
+      * @param actualRepayAmount 被偿还的标的金额
+      * @param borrowerIndex 借款人索引
+      */
     function repayBorrowVerify(
         address cToken,
         address payer,
         address borrower,
         uint actualRepayAmount,
-        uint borrowerIndex) external {
+        uint borrowerIndex
+    ) external {
         // Shh - currently unused
         cToken;
         payer;
@@ -521,7 +524,7 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
       * @notice 检查是否应该允许清算发生
       * @param cTokenBorrowed 借款人借入的资产
       * @param cTokenCollateral 资产被用作抵押品，将被没收
-      * @param 清算人 偿还借款和扣押抵押品的地址
+      * @param liquidator 清算人 偿还借款和扣押抵押品的地址
       * @param borrower 借款人地址
       * @param repayAmount 被偿还的标的金额
       */
@@ -567,20 +570,21 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
     }
 
     /**
-     * @notice Validates liquidateBorrow and reverts on rejection. May emit logs.
-     * @param cTokenBorrowed Asset which was borrowed by the borrower
-     * @param cTokenCollateral Asset which was used as collateral and will be seized
-     * @param liquidator The address repaying the borrow and seizing the collateral
-     * @param borrower The address of the borrower
-     * @param actualRepayAmount The amount of underlying being repaid
-     */
+      * @notice 验证liquidateBorrow 并在拒绝时恢复。 可能会发出日志。
+      * @param cTokenBorrowed 借款人借入的资产
+      * @param cTokenCollateral 资产被用作抵押品，将被没收
+      * @param liquidator 偿还借款和扣押抵押品的地址
+      * @param borrower 借款人地址
+      * @param actualRepayAmount 被偿还的标的金额
+      */
     function liquidateBorrowVerify(
         address cTokenBorrowed,
         address cTokenCollateral,
         address liquidator,
         address borrower,
         uint actualRepayAmount,
-        uint seizeTokens) external {
+        uint seizeTokens
+    ) external {
         // Shh - currently unused
         cTokenBorrowed;
         cTokenCollateral;
@@ -599,7 +603,7 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
       * @notice 检查是否应允许扣押资产
       * @param cTokenCollateral 资产被用作抵押品，将被没收
       * @param cTokenBorrowed 借款人借入的资产
-      * @param 清算人 偿还借款和扣押抵押品的地址
+      * @param liquidator 偿还借款和扣押抵押品的地址
       * @param borrower 借款人地址
       * @param seizeTokens 要没收的抵押代币数量
       */
@@ -641,19 +645,20 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
     }
 
     /**
-     * @notice Validates seize and reverts on rejection. May emit logs.
-     * @param cTokenCollateral Asset which was used as collateral and will be seized
-     * @param cTokenBorrowed Asset which was borrowed by the borrower
-     * @param liquidator The address repaying the borrow and seizing the collateral
-     * @param borrower The address of the borrower
-     * @param seizeTokens The number of collateral tokens to seize
-     */
+      * @notice 验证抓住并在拒绝时恢复。 可能会发出日志。
+      * @param cTokenCollateral 资产被用作抵押品，将被没收
+      * @param cTokenBorrowed 借款人借入的资产
+      * @param liquidator 偿还借款和扣押抵押品的地址
+      * @param borrower 借款人地址
+      * @param seizeTokens 要没收的抵押代币数量
+      */
     function seizeVerify(
         address cTokenCollateral,
         address cTokenBorrowed,
         address liquidator,
         address borrower,
-        uint seizeTokens) external {
+        uint seizeTokens
+    ) external {
         // Shh - currently unused
         cTokenCollateral;
         cTokenBorrowed;
@@ -728,10 +733,10 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
     /*** Liquidity/Liquidation Calculations ***/
 
     /**
-     * @dev Local vars for avoiding stack-depth limits in calculating account liquidity.
-     *  Note that `cTokenBalance` is the number of cTokens the account owns in the market,
-     *  whereas `borrowBalance` is the amount of underlying that the account has borrowed.
-     */
+      * @dev 用于在计算账户流动性时避免堆栈深度限制的本地变量。
+      * 请注意，`cTokenBalance` 是该账户在市场上拥有的 cToken 数量，
+      * 而 `borrowBalance` 是账户借入的标的资产的数量。
+      */
     struct AccountLiquidityLocalVars {
         uint sumCollateral;
         uint sumBorrowPlusEffects;
@@ -746,11 +751,16 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
     }
 
     /**
-     * @notice Determine the current account liquidity wrt collateral requirements
-     * @return (possible error code (semi-opaque),
-                account liquidity in excess of collateral requirements,
-     *          account shortfall below collateral requirements)
-     */
+      * @notice 确定当前账户流动性 wrt 抵押品要求
+      * return（可能的错误代码（半透明），
+                 账户流动性超过抵押品要求，
+      * 账户余额低于抵押要求）
+      */
+    // 获取账户流动性
+    // 账户流动性是指用户供应余额的总值减去该用户借款余额的总值，再乘以协议抵押品比率。
+    // 账户流动性为负数的用户将无法提取或借入任何资产，直到其账户流动性恢复到正数。
+    // 这可以通过向协议提供更多的资产或偿还任何未偿还的借款资产来实现。账户流动性为负值，也意味着用户的账户将被清算。
+    // 查询待清算账户
     function getAccountLiquidity(address account) public view returns (uint, uint, uint) {
         (Error err, uint liquidity, uint shortfall) = getHypotheticalAccountLiquidityInternal(account, CToken(0), 0, 0);
 
@@ -766,15 +776,15 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
     }
 
     /**
-     * @notice Determine what the account liquidity would be if the given amounts were redeemed/borrowed
-     * @param cTokenModify The market to hypothetically redeem/borrow in
-     * @param account The account to determine liquidity for
-     * @param redeemTokens The number of tokens to hypothetically redeem
-     * @param borrowAmount The amount of underlying to hypothetically borrow
-     * @return (possible error code (semi-opaque),
-                hypothetical account liquidity in excess of collateral requirements,
-     *          hypothetical account shortfall below collateral requirements)
-     */
+      * @notice 确定如果给定金额被赎回/借入，账户流动性将是多少
+      * @param cTokenModify 假设赎回/借入的市场
+      * @param account 确定流动性的账户
+      * @param redeemTokens 假设要赎回的代币数量
+      * @param borrowAmount 假设借入的底层证券数量
+      * return（可能的错误代码（半透明），
+                 假设账户流动性超过抵押品要求，
+      * 假设账户缺口低于抵押要求）
+      */
     function getHypotheticalAccountLiquidity(
         address account,
         address cTokenModify,
@@ -926,12 +936,12 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
     }
 
     /*** Admin Functions ***/
-
+    /*** 管理员函数 ***/
     /**
-      * @notice Sets a new price oracle for the comptroller
-      * @dev Admin function to set a new price oracle
-      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
-      */
+       * @notice 为主计长设置新的价格预言机
+       * @dev 管理员功能设置新的价格预言机
+       * @return uint 0=成功，否则失败（详见ErrorReporter.sol）
+       */
     function _setPriceOracle(PriceOracle newOracle) public returns (uint) {
         // Check caller is admin
         if (msg.sender != admin) {
@@ -953,7 +963,7 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
     /**
       * @notice 设置清算借款时使用的closeFactor
       * @dev Admin函数设置closeFactor
-      * @param newCloseFactorMantissa新关闭因子，按1e18缩放
+      * @param newCloseFactorMantissa 新关闭因子，按1e18缩放
       * @return uint 0=成功，否则失败
     */
     //   设置清算比例
@@ -971,12 +981,12 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
     }
 
     /**
-      * @notice Sets the collateralFactor for a market
-      * @dev Admin function to set per-market collateralFactor
-      * @param cToken The market to set the factor on
-      * @param newCollateralFactorMantissa The new collateral factor, scaled by 1e18
-      * @return uint 0=success, otherwise a failure. (See ErrorReporter for details)
-      */
+       * @notice 设置市场的抵押因子
+       * @dev 管理功能设置每个市场的抵押因子
+       * @param cToken 设置因子的市场
+       * @param newCollateralFactorMantissa 新的抵押因子，按 1e18 缩放
+       * @return uint 0=成功，否则失败。 （有关详细信息，请参阅错误报告器）
+       */
     //  设置抵押率
     function _setCollateralFactor(CToken cToken, uint newCollateralFactorMantissa) external returns (uint) {
         // Check caller is admin
@@ -1014,11 +1024,11 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
     }
 
     /**
-      * @notice Sets liquidationIncentive
-      * @dev Admin function to set liquidationIncentive
-      * @param newLiquidationIncentiveMantissa New liquidationIncentive scaled by 1e18
-      * @return uint 0=success, otherwise a failure. (See ErrorReporter for details)
-      */
+       * @notice 设置清算激励
+       * @dev 管理员功能设置清算激励
+       * @param newLiquidationIncentiveMantissa 新的清算激励按 1e18 缩放
+       * @return uint 0=成功，否则失败。 （有关详细信息，请参阅错误报告器）
+       */
     //  设置流动性激励为 8%，参数值就是1.08 * 1 ^ 18;
     function _setLiquidationIncentive(uint newLiquidationIncentiveMantissa) external returns (uint) {
         // Check caller is admin
@@ -1092,11 +1102,11 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
 
 
     /**
-      * @notice Set the given borrow caps for the given cToken markets. Borrowing that brings total borrows to or above borrow cap will revert.
-      * @dev Admin or borrowCapGuardian function to set the borrow caps. A borrow cap of 0 corresponds to unlimited borrowing.
-      * @param cTokens The addresses of the markets (tokens) to change the borrow caps for
-      * @param newBorrowCaps The new borrow cap values in underlying to be set. A value of 0 corresponds to unlimited borrowing.
-      */
+       * @notice 为给定的 cToken 市场设置给定的借贷上限。 使借款总额达到或超过借款上限的借款将恢复。
+       * @dev Admin 或 borrowCapGuardian 函数设置借用上限。 借款上限为 0 对应于无限制借款。
+       * @param cTokens 用于更改借贷上限的市场（代币）地址
+       * @param newBorrowCaps 要设置的底层证券的新借入上限值。 值 0 对应于无限借用。
+       */
     function _setMarketBorrowCaps(CToken[] calldata cTokens, uint[] calldata newBorrowCaps) external {
     	require(msg.sender == admin || msg.sender == borrowCapGuardian, "only admin or borrow cap guardian can set borrow caps"); 
 
@@ -1112,9 +1122,9 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
     }
 
     /**
-     * @notice Admin function to change the Borrow Cap Guardian
-     * @param newBorrowCapGuardian The address of the new Borrow Cap Guardian
-     */
+      * @notice 管理员功能更改借用上限监护人
+      * @param newBorrowCapGuardian 新借款上限监护人的地址
+      */
     function _setBorrowCapGuardian(address newBorrowCapGuardian) external {
         require(msg.sender == admin, "only admin can set borrow cap guardian");
 
@@ -1129,10 +1139,10 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
     }
 
     /**
-     * @notice Admin function to change the Pause Guardian
-     * @param newPauseGuardian The address of the new Pause Guardian
-     * @return uint 0=success, otherwise a failure. (See enum Error for details)
-     */
+      * @notice 管理员功能更改暂停守护者
+      * @param newPauseGuardian 新暂停守护者的地址
+      * @return uint 0=成功，否则失败。 （详见枚举错误）
+      */
     function _setPauseGuardian(address newPauseGuardian) public returns (uint) {
         if (msg.sender != admin) {
             return fail(Error.UNAUTHORIZED, FailureInfo.SET_PAUSE_GUARDIAN_OWNER_CHECK);
@@ -1203,12 +1213,12 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
     }
 
     /*** Comp Distribution ***/
-
-    /**
-     * @notice Set COMP speed for a single market
-     * @param cToken The market whose COMP speed to update
-     * @param compSpeed New COMP speed for market
-     */
+    /*** 奖励分配 */
+   /**
+      * @notice 为单个市场设置 COMP 速度
+      * @param cToken COMP 更新速度的市场
+      * @param compSpeed 市场的新 COMP 速度
+      */
     function setCompSpeedInternal(CToken cToken, uint compSpeed) internal {
         uint currentCompSpeed = compSpeeds[address(cToken)];
         if (currentCompSpeed != 0) {
@@ -1345,11 +1355,11 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
     }
 
     /**
-     * @notice Calculate COMP accrued by a borrower and possibly transfer it to them
-     * @dev Borrowers will not begin to accrue until after the first interaction with the protocol.
-     * @param cToken The market in which the borrower is interacting
-     * @param borrower The address of the borrower to distribute COMP to
-     */
+      * @notice 计算借款人累积的 COMP 并可能将其转移给他们
+      * @dev 借款人在与协议第一次交互之后才会开始累积。
+      * @param cToken 借款人互动的市场
+      * @param borrower 要分配 COMP 的借款人的地址
+      */
     function distributeBorrowerComp(address cToken, address borrower, Exp memory marketBorrowIndex) internal {
         CompMarketState storage borrowState = compBorrowState[cToken];
         Double memory borrowIndex = Double({mantissa: borrowState.index});
@@ -1367,9 +1377,9 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
     }
 
     /**
-     * @notice Calculate additional accrued COMP for a contributor since last accrual
-     * @param contributor The address to calculate contributor rewards for
-     */
+      * @notice 计算自上次应计以来贡献者的额外应计 COMP
+      * @param contributor 计算贡献者奖励的地址
+      */
     function updateContributorRewards(address contributor) public {
         uint compSpeed = compContributorSpeeds[contributor];
         uint blockNumber = getBlockNumber();
@@ -1384,19 +1394,19 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
     }
 
     /**
-     * @notice Claim all the comp accrued by holder in all markets
-     * @param holder The address to claim COMP for
-     */
+      * @notice 索取持有人在所有市场中累积的所有补偿
+      * @param holder 申请 COMP 的地址
+      */
     // 提取奖励的COMP token  -  前提需要开启存取款奖励(_setCompSpeed 函数)
     function claimComp(address holder) public {
         return claimComp(holder, allMarkets);
     }
 
     /**
-     * @notice Claim all the comp accrued by holder in the specified markets
-     * @param holder The address to claim COMP for
-     * @param cTokens The list of markets to claim COMP in
-     */
+      * @notice 索取持有人在指定市场获得的所有补偿
+      * @param holder 申请 COMP 的地址
+      * @param cTokens 要求 COMP 的市场列表
+      */
     // 提取奖励的COMP token  -  前提需要开启存取款奖励(_setCompSpeed 函数)
     function claimComp(address holder, CToken[] memory cTokens) public {
         address[] memory holders = new address[](1);
@@ -1404,13 +1414,13 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
         claimComp(holders, cTokens, true, true);
     }
 
-    /**
-     * @notice Claim all comp accrued by the holders
-     * @param holders The addresses to claim COMP for
-     * @param cTokens The list of markets to claim COMP in
-     * @param borrowers Whether or not to claim COMP earned by borrowing
-     * @param suppliers Whether or not to claim COMP earned by supplying
-     */
+   /**
+      * @notice 索取持有人应得的所有补偿
+      * @param holders 申请 COMP 的地址
+      * @param cTokens 要求 COMP 的市场列表
+      * @param borrowers 是否领取通过借款赚取的 COMP
+      * @param suppliers 供应商是否要求通过供应获得的 COMP
+      */
     // 提取奖励的COMP token  -  前提需要开启存取款奖励(_setCompSpeed 函数)
     function claimComp(address[] memory holders, CToken[] memory cTokens, bool borrowers, bool suppliers) public {
         for (uint i = 0; i < cTokens.length; i++) {
@@ -1435,12 +1445,12 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
     }
 
     /**
-     * @notice Transfer COMP to the user
-     * @dev Note: If there is not enough COMP, we do not perform the transfer all.
-     * @param user The address of the user to transfer COMP to
-     * @param amount The amount of COMP to (possibly) transfer
-     * @return The amount of COMP which was NOT transferred to the user
-     */
+      * @notice 将 COMP 转移给用户
+      * @dev 注意：如果没有足够的 COMP，我们不会全部执行传输。
+      * @param user 将 COMP 转入的用户地址
+      * @param amount 要（可能）转账的 COMP 数量
+      * @return 未转给用户的 COMP 数量
+      */
     function grantCompInternal(address user, uint amount) internal returns (uint) {
         Comp comp = Comp(getCompAddress());
         uint compRemaining = comp.balanceOf(address(this));
@@ -1452,13 +1462,13 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
     }
 
     /*** Comp Distribution Admin ***/
-
+    /*** 管理员调用的 奖励分配函数 ***/
     /**
-     * @notice Transfer COMP to the recipient
-     * @dev Note: If there is not enough COMP, we do not perform the transfer all.
-     * @param recipient The address of the recipient to transfer COMP to
-     * @param amount The amount of COMP to (possibly) transfer
-     */
+      * @notice 将 COMP 转给收件人
+      * @dev 注意：如果没有足够的 COMP，我们不会全部执行传输。
+      * @param recipient 将 COMP 转入的收件人地址
+      * @param amount 要（可能）转账的 COMP 数量
+      */
     function _grantComp(address recipient, uint amount) public {
         require(adminOrInitializing(), "only admin can grant comp");
         uint amountLeft = grantCompInternal(recipient, amount);
@@ -1467,10 +1477,10 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
     }
 
     /**
-     * @notice Set COMP speed for a single market
-     * @param cToken The market whose COMP speed to update
-     * @param compSpeed New COMP speed for market
-     */
+      * @notice 为单个市场设置 COMP 速度
+      * @param cToken COMP 更新速度的市场
+      * @param compSpeed 市场的新 COMP 速度
+      */
     //  设置token奖励 可以自己单独设置某些cToken|cEth 有奖励
     // 用户存和借cToken都会有奖励，如果cToken市场设置了compSpeed。compSpeed： 整数，表示协议将COMP分配给市场供应商或借款人的速率。价值是分配给市场的每个区块的COMP（单位：wei）
     function _setCompSpeed(CToken cToken, uint compSpeed) public {
@@ -1480,10 +1490,10 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
     }
 
     /**
-     * @notice Set COMP speed for a single contributor
-     * @param contributor The contributor whose COMP speed to update
-     * @param compSpeed New COMP speed for contributor
-     */
+      * @notice 为单个贡献者设置 COMP 速度
+      * @param contributor 贡献者 COMP 更新速度的贡献者
+      * @param compSpeed 贡献者的新 COMP 速度
+      */
     function _setContributorCompSpeed(address contributor, uint compSpeed) public {
         require(adminOrInitializing(), "only admin can set comp speed");
 
@@ -1514,9 +1524,9 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
     }
 
     /**
-     * @notice Return the address of the COMP token
-     * @return The address of COMP
-     */
+      * @notice 返回 COMP 令牌的地址
+      * @return COMP 的地址
+      */
     function getCompAddress() public pure returns (address) {
         return /**start*/0x6b39b761b1b64C8C095BF0e3Bb0c6a74705b4788/**end*/;
     }

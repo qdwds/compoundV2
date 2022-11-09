@@ -575,8 +575,9 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     * @dev 除非还原，否则无论操作是否成功都会产生利息
     * @param mintAmount 要供应的基础资产的金额
     */
-//    指定token兑换cToken
+    // 指定token兑换cToken
     // * @return（uint，uint）错误代码（0=成功，否则为失败，请参阅ErrorReporter.sol）和实际的薄荷金额。
+    // 供应功能允许供应商将资产转移到货币市场。然后，该资产开始根据该资产的当前供应利率累计利息。
     function mintInternal(uint mintAmount) internal nonReentrant returns (uint, uint) {
         // 计算累计利率
         uint error = accrueInterest();
@@ -687,6 +688,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     * @return uint 0=成功，否则为失败（有关详细信息，请参阅ErrorReporter.sol）
     */
     //  获取全部赎回数量情况下 cToken对换token得数量
+    // 提款功能将用户的资产从货币市场转回给用户，具有降低协议中用户的供给平衡的作用。
     function redeemInternal(uint redeemTokens) internal nonReentrant returns (uint) {
         // 计算汇率
         uint error = accrueInterest();
@@ -856,6 +858,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     * @return uint 0=成功，否则为失败（有关详细信息，请参阅ErrorReporter.sol）
     */
     // 借钱 需要先有存款额度
+    // 借款功能将资产从货币市场转移到使用者手中，其作用是根据借入资产的当前借款利率开始利息累积。
     function borrowInternal(uint borrowAmount) internal nonReentrant returns (uint) {
         //  计算 借款利率
         uint error = accrueInterest();
@@ -966,6 +969,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
       * @return (uint, uint) 错误码（0=成功，否则失败，见ErrorReporter.sol），实际还款金额。
       */
     //  还款 自己还自己的钱
+    // 偿还借款功能将借入的资产转入货币市场，具有减少使用者借款余额的作用。
     function repayBorrowInternal(uint repayAmount) internal nonReentrant returns (uint, uint) {
         // 计算利息
         uint error = accrueInterest();
@@ -1107,6 +1111,8 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
       * @return (uint, uint) 错误码（0=成功，否则失败，见ErrorReporter.sol），实际还款金额。
       */
     // 清算
+    // 如果用户的总资产/未偿还的借贷支持 < 抵押率  就会触发清算
+    // 如果发生清算，则清算人可以代表被清算的个人（也称为清算人）偿还部分或全部未偿还的借款。
     function liquidateBorrowInternal(
         address borrower,   //  帮哪个用户还钱
         uint repayAmount,   //  还多少钱

@@ -8,6 +8,12 @@ import "hardhat/console.sol";
  * @title Compound's JumpRateModel Contract
  * @author Compound
  */
+/***
+ * @title 利率模型 - 利率随着借款总额和存款总额的变动而变动
+ * 借款总额为零（没有人进行借款），此时没有营收产生，存款利率为零
+ * 借款总额增大，产生营收增多，存款利率也会提高
+ * 借款总额不变（营收不变），存款总额增大，存款利率降低
+ */
 contract JumpRateModel is InterestRateModel {
     using SafeMath for uint;
 

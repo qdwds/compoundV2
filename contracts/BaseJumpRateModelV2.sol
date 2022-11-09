@@ -160,6 +160,7 @@ contract BaseJumpRateModelV2 {
      */
     //  * @return 每个块的供应率百分比作为尾数（按 1e18 缩放）
     // 存款利率
+    // 存款利率 =（借款总额 * 借款利率）/ 存款总额
     function getSupplyRate(
         uint cash,
         uint borrows,
