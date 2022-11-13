@@ -9,6 +9,7 @@ const config: HardhatUserConfig = {
 	networks: {
 		localhost: {
 			from: "http://127.0.0.1:8545/",
+			// accounts:[process.env.GRANACHE_PRIVATE_KEY!]
 		},
 		oke:{
 			url:"https://exchaintestrpc.okex.org",

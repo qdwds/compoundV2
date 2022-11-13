@@ -1,10 +1,11 @@
 import * as dotenv from "dotenv";
+import { Contract } from "ethers";
 dotenv.config();
 import { ethers } from "hardhat"
 import address from "../abi/address.json";
 
 
-export const createContracts = async () => {
+export const createContracts = async ():Promise<any> => {
     const provider = new ethers.providers.JsonRpcProvider("http://127.0.0.1:8545/");
     // const wallet = new ethers.Wallet(process.env.OKE_PRIVATE_KEY!);
     // const signer = wallet.connect(provider);

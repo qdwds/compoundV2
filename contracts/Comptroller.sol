@@ -1446,6 +1446,6 @@ contract Comptroller is ComptrollerV6Storage, ComptrollerInterface, ComptrollerE
      * @return The address of COMP
      */
     function getCompAddress() public view returns (address) {
-        return /**start*/0x5FbDB2315678afecb367f032d93F642f64180aa3/**end*/;
+        return /**start*/0xB82008565FdC7e44609fA118A4a681E92581e680/**end*/;
     }
 }

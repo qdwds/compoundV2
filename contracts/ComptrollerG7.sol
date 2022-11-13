@@ -1071,16 +1071,16 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
         cToken.isCToken(); // Sanity check to make sure its really a CToken
 
         // // Note that isComped is not in active use anymore
-        // markets[address(cToken)] = Market({
-        //     isListed: true, //  上市
-        //     isComped: false,
-        //     collateralFactorMantissa: 0    //  抵押率
-        // });
+        markets[address(cToken)] = Market({
+            isListed: true, //  上市
+            isComped: false,
+            collateralFactorMantissa: 0    //  抵押率
+        });
         // Note that isComped is not in active use anymore
-        Market storage market = markets[address(cToken)];
-        market.isListed = true;
-        market.isComped = false;
-        market.collateralFactorMantissa = 0;
+        // Market storage market = markets[address(cToken)];
+        // market.isListed = true;
+        // market.isComped = false;
+        // market.collateralFactorMantissa = 0;
         
         console.log( markets[address(cToken)].isListed);
         // 添加到市场中

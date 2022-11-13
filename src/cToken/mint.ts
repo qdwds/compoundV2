@@ -1,11 +1,11 @@
 // compound 用户存款存款
 
 // 用户先compound存入USDT, compound会根据当前的汇率算出铸造cUSDT的数量，将对应的cUSDT代币转移到用户账户中
-import { createContracts } from "./contracts";
-import address from "../abi/address.json";
+import { createContracts } from "../contracts";
+import address from "../../abi/address.json";
 import { formatUnits, parseUnits } from "ethers/lib/utils";
 import { Contract } from "ethers";
-import { comptrollerG7_enterMarkets, comptrollerG7__supportMarket } from "./comptroller";
+import { comptrollerG7_enterMarkets, comptrollerG7__supportMarket } from "../comptroller";
 import { ethers } from "hardhat";
 
 
@@ -15,12 +15,11 @@ import { ethers } from "hardhat";
 const mint = async () => {
     const { cErc20Delegator, erc20Token,signer, compoundG7} = await createContracts();
     await erc20Token.approve(cErc20Delegator.address, ethers.constants.MaxUint256)
-    console.log("my token",await erc20Token.allowance(signer.address, cErc20Delegator.address))
-    console.log(await erc20Token.balanceOf(signer.address))
-    console.log(await erc20Token.balanceOf(cErc20Delegator.address))
-    console.log(await erc20Token.balanceOf(compoundG7.address))
     const tx = await cErc20Delegator.mint(parseUnits("1000"));
-    console.log(tx)
+
+    console.log((await tx.wait()).logs)
+    console.log("----------")
+    console.log((await tx.wait()).events)
 }
 
 export const cErc20Store =async () => {
@@ -64,13 +63,13 @@ const main = async () => {
     // await comptrollerG7__supportMarket(cErc20Delegator.address);
     // await comptrollerG7__supportMarket(cErc20Delegator.address);
     // await comptrollerG7__supportMarket(cErc20Delegator.address);
-    console.log("getCompAddress",await compoundG7.getCompAddress())
+    // console.log("getCompAddress",await compoundG7.getCompAddress())
     // 用户把代币加入市场
     // await comptrollerG7_enterMarkets([address.cErc20Delegator, address.cEther])
     
     await mint();
 
-    await cErc20Store();
+    // await cErc20Store();
 
 
 
