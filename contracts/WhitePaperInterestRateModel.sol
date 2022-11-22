@@ -78,6 +78,7 @@ contract WhitePaperInterestRateModel is InterestRateModel {
 		// 借款利率 = 使用率 * 区块斜率 + 基准利率
 		// borrowRate = utilizationRate * multiplier + baseRate 
 		// 借款年利率 = 5% + (12% x 62.13%) = 12.4556%
+        // 传入的是1e18 所以需要 / 1e18
         return ur.mul(multiplierPerBlock).div(1e18).add(baseRatePerBlock);
     }
 

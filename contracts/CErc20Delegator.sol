@@ -1,7 +1,7 @@
 pragma solidity ^0.5.16;
 
 import "./CTokenInterfaces.sol";
-
+import "hardhat/console.sol";
 /**
   * @title Compound 的 CErc20Delegator 合约
   * @notice CTokens 封装了 EIP-20 底层并委托给实现
@@ -246,6 +246,7 @@ contract CErc20Delegator is CTokenInterface, CErc20Interface, CDelegatorInterfac
     //  获取供应余额
     function balanceOfUnderlying(address owner) external returns (uint) {
         bytes memory data = delegateToImplementation(abi.encodeWithSignature("balanceOfUnderlying(address)", owner));
+        console.log("abi.decode(data, (uint)",abi.decode(data, (uint)));
         return abi.decode(data, (uint));
     }
 

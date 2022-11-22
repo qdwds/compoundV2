@@ -135,9 +135,9 @@ contract GovernorBravoDelegate is GovernorBravoDelegateStorageV1, GovernorBravoE
     }
 
     /**
-      * @notice Executes a queued proposal if eta has passed
-      * @param proposalId The id of the proposal to execute
-      */
+       * @notice 如果 eta 已通过，则执行排队的提案
+       * @param proposalId 要执行的提案的 id
+       */
     function execute(uint proposalId) external payable {
         require(state(proposalId) == ProposalState.Queued, "GovernorBravo::execute: proposal can only be executed if it is queued");
         Proposal storage proposal = proposals[proposalId];

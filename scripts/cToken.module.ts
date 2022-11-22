@@ -27,7 +27,7 @@ export const CErc20DelegateDeploy = async () => {
 
 export const cErc20DelegatorDeploy =async (
     erc20Address:string,
-    unitrollerAddress:string,
+    comptrollerAddress:string,
     jumpRateModelV2Address:string,
     owner:string,
     cErc20DelegateAddress:string
@@ -35,9 +35,9 @@ export const cErc20DelegatorDeploy =async (
     const CErc20Delegator = await ethers.getContractFactory(CErc20DelegatorName);
     const cErc20Delegator = await CErc20Delegator.deploy(
         erc20Address,  //  erc20 token address
-        unitrollerAddress, //  unitroller address
+        comptrollerAddress, //  comptroller address
         jumpRateModelV2Address, //  jumpRateModelV2 address
-        parseEther("1"),              //  初始汇率，按 1：1 设置，本文 1 * 10 ^ 18
+        parseEther("0.5"),              //  初始汇率，按 1：1 设置，本文 1 * 10 ^ 18
         "COPM USD", //  name
         "cUSD",     //  symbol
         "18",       //  decimals
@@ -61,18 +61,18 @@ export const cToken__setReserveFactor = async(CErc20DelegatorAddress:string)=>{
 
 
 // 加入市场
-// export const cToken__supportMarket = async (comptrollerG7Address:string, tokenAddress:string) => {
-//     const cToken = await ethers.getContractAt("ComptrollerG7",comptrollerG7Address);
+// export const cToken__supportMarket = async (comptrollerAddress:string, tokenAddress:string) => {
+//     const cToken = await ethers.getContractAt("Comptroller",comptrollerAddress);
 //     await cToken._supportMarket(tokenAddress);  //  把该token加入到市场中
 // }
 
 /**
  * 代币加入到市场中
- * @param comptrollerG7Address 
+ * @param comptrollerAddress 
  * @param cErc20DelegatorAddress 
  */
-export const cErc20Delegator_supportMarket = async (comptrollerG7Address:string, cErc20DelegatorAddress:string) => {
-    const cToken = await ethers.getContractAt("ComptrollerG7",comptrollerG7Address);
+export const cErc20Delegator_supportMarket = async (comptrollerAddress:string, cErc20DelegatorAddress:string) => {
+    const cToken = await ethers.getContractAt("Comptroller",comptrollerAddress);
     await cToken._supportMarket(cErc20DelegatorAddress);  //  把该token加入到市场中
     console.log("cErc20Delegator_supportMarket call success !!")
 }

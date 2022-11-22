@@ -3,17 +3,17 @@ import { createContracts } from "./contracts";
 
 
 export const comptrollerStore = async () => {
-    const { compoundG7 } = await createContracts();
-    // await compoundG7.
+    const { comptroller } = await createContracts();
+    // await comptroller.
 }
 
 /**
  * 添加代币到市场中
  * @param cToken 要添加的cToken地址
  */
-export const comptrollerG7__supportMarket = async (cToken:string) =>{
-    const { compoundG7 } = await createContracts();
-    const tx = await compoundG7._supportMarket(cToken).catch(err => console.log(err));
+export const comptroller__supportMarket = async (cToken:string) =>{
+    const { comptroller } = await createContracts();
+    const tx = await comptroller._supportMarket(cToken).catch(err => console.log(err));
     console.log((await tx.wait()).logs);
 
 }
@@ -22,19 +22,19 @@ export const comptrollerG7__supportMarket = async (cToken:string) =>{
  * 用户把代币进入市场
  * @param cTokens 
  */
-export const comptrollerG7_enterMarkets = async (cTokens: Array<string>) => {
-    const { compoundG7 } = await createContracts();
-    await compoundG7.enterMarkets(cTokens).catch(err => console.log(err));
-    await comptrollerG7_getAssetsIn();
+export const comptroller_enterMarkets = async (cTokens: Array<string>) => {
+    const { comptroller } = await createContracts();
+    await comptroller.enterMarkets(cTokens).catch(err => console.log(err));
+    await comptroller_getAssetsIn();
 }
 
 /**
  * 获取用户加入市场的代币
  * @param owner 
  */
-export const comptrollerG7_getAssetsIn = async (owner?:string) => {
-    const { compoundG7, signer } = await createContracts();
-    const reserves = await compoundG7.getAssetsIn(owner||signer.address);
+export const comptroller_getAssetsIn = async (owner?:string) => {
+    const { comptroller, signer } = await createContracts();
+    const reserves = await comptroller.getAssetsIn(owner||signer.address);
     console.log("用户加入市场的代币",reserves)
 
 

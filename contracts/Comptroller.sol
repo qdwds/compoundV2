@@ -7,13 +7,15 @@ import "./ComptrollerInterface.sol";
 import "./ComptrollerStorage.sol";
 import "./Unitroller.sol";
 import "./Governance/Comp.sol";
+import "hardhat/console.sol";
+
 
 /**
  * @title Compound's Comptroller Contract
  * @author Compound
  */
 // 审计合约，对存取款等操作审计和校验
-contract Comptroller is ComptrollerV6Storage, ComptrollerInterface, ComptrollerErrorReporter, ExponentialNoError {
+contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerErrorReporter, ExponentialNoError {
     /// @notice Emitted when an admin supports a market
     event MarketListed(CToken cToken);
 
@@ -68,7 +70,7 @@ contract Comptroller is ComptrollerV6Storage, ComptrollerInterface, ComptrollerE
     /// @notice Emitted when COMP is granted by admin
     event CompGranted(address recipient, uint amount);
 
-    /// @notice The initial COMP index for a market
+    /// @notice  市场的初始COMP指数
     uint224 public constant compInitialIndex = 1e36;
 
     // closeFactorMantissa must be strictly greater than this value
@@ -237,7 +239,7 @@ contract Comptroller is ComptrollerV6Storage, ComptrollerInterface, ComptrollerE
         // Shh - currently unused
         minter;
         mintAmount;
-
+        console.log(!markets[cToken].isListed);
         if (!markets[cToken].isListed) {
             return uint(Error.MARKET_NOT_LISTED);
         }
@@ -342,7 +344,7 @@ contract Comptroller is ComptrollerV6Storage, ComptrollerInterface, ComptrollerE
     function borrowAllowed(address cToken, address borrower, uint borrowAmount) external returns (uint) {
         // Pausing is a very serious situation - we revert to sound the alarms
         require(!borrowGuardianPaused[cToken], "borrow is paused");
-
+        console.log("!markets[cToken].isListed");
         if (!markets[cToken].isListed) {
             return uint(Error.MARKET_NOT_LISTED);
         }
@@ -360,7 +362,7 @@ contract Comptroller is ComptrollerV6Storage, ComptrollerInterface, ComptrollerE
             // it should be impossible to break the important invariant
             assert(markets[cToken].accountMembership[borrower]);
         }
-
+        console.log("oracle.getUnderlyingPrice(CToken(cToken))", oracle.getUnderlyingPrice(CToken(cToken)));
         if (oracle.getUnderlyingPrice(CToken(cToken)) == 0) {
             return uint(Error.PRICE_ERROR);
         }
@@ -832,10 +834,10 @@ contract Comptroller is ComptrollerV6Storage, ComptrollerInterface, ComptrollerE
     /*** Admin Functions ***/
 
     /**
-      * @notice Sets a new price oracle for the comptroller
-      * @dev Admin function to set a new price oracle
-      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
-      */
+       * @notice 为审计员设置一个新的价格预言机
+       * @dev Admin 函数设置一个新的价格预言机
+       * @return uint 0=成功，否则失败（详见ErrorReporter.sol）
+       */
     //  价格预言机
     function _setPriceOracle(PriceOracle newOracle) public returns (uint) {
         // Check caller is admin
@@ -975,31 +977,36 @@ contract Comptroller is ComptrollerV6Storage, ComptrollerInterface, ComptrollerE
             require(allMarkets[i] != CToken(cToken), "market already added");
         }
         allMarkets.push(CToken(cToken));
+        console.log("markets[address(cToken)].isListed",address(cToken),markets[address(cToken)].isListed);
     }
 
+    // 初始化市场
     function _initializeMarket(address cToken) internal {
         uint32 blockNumber = safe32(getBlockNumber(), "block number exceeds 32 bits");
-
+        
+        // 获取市场comp供应率
         CompMarketState storage supplyState = compSupplyState[cToken];
         CompMarketState storage borrowState = compBorrowState[cToken];
 
         /*
          * Update market state indices
          */
+        // 判断使用率是否为0
         if (supplyState.index == 0) {
-            // Initialize supply state index with default value
+            // 使用默认值初始化供应状态索引
             supplyState.index = compInitialIndex;
         }
 
         if (borrowState.index == 0) {
-            // Initialize borrow state index with default value
+            // 使用默认值初始化供应状态索引
             borrowState.index = compInitialIndex;
         }
 
         /*
          * Update market state block numbers
          */
-         supplyState.block = borrowState.block = blockNumber;
+        // 更新为最新区块
+        supplyState.block = borrowState.block = blockNumber;
     }
 
 
@@ -1446,6 +1453,6 @@ contract Comptroller is ComptrollerV6Storage, ComptrollerInterface, ComptrollerE
      * @return The address of COMP
      */
     function getCompAddress() public view returns (address) {
-        return /**start*/0xB82008565FdC7e44609fA118A4a681E92581e680/**end*/;
+        return /**start*/0x5Ffe31E4676D3466268e28a75E51d1eFa4298620/**end*/;
     }
 }

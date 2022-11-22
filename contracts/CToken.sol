@@ -26,7 +26,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     * @param symbol_ 此令牌的 EIP-20 符号
     * @param decimals_ 此令牌的 EIP-20 十进制精度
     */
-   //   用来初始化合约，设置审计合约和利率模型
+    // 用来初始化合约，设置审计合约和利率模型
     function initialize(
         ComptrollerInterface comptroller_,  //  审计合约
         InterestRateModel interestRateModel_,   //  利率模型合约
@@ -301,6 +301,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     */
     // * @return 利息借款总额
     //  当前借款总额度  = 借款额度 + 应付利息
+    // function totalBorrowsCurrent() external  returns (uint) {
     function totalBorrowsCurrent() external nonReentrant returns (uint) {
         // 计算累积列率时候不能报错
         require(accrueInterest() == uint(Error.NO_ERROR), "accrue interest failed");
@@ -313,6 +314,8 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     * @param account 更新borrowIndex后应计算其余额的地址
     */
     // * @return 计算的余额
+    // 用户借款额度包含利息
+    // function borrowBalanceCurrent(address account) external returns (uint) {
     function borrowBalanceCurrent(address account) external nonReentrant returns (uint) {
         // 计算累积利率
         require(accrueInterest() == uint(Error.NO_ERROR), "accrue interest failed");
@@ -325,11 +328,12 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     * @param account 应计算其余额的地址
     */
     // * @return 计算的余额
-    //  借款人借入额度
+    //  借款人借入额度 包含利息
     function borrowBalanceStored(address account) public view returns (uint) {
         // 获取借款额度
         (MathError err, uint result) = borrowBalanceStoredInternal(account);
         require(err == MathError.NO_ERROR, "borrowBalanceStored: borrowBalanceStoredInternal failed");
+        console.log("借款额度：", result);
         return result;
     }
 
@@ -377,6 +381,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     * @notice 累积利息然后返回最新汇率
     */
     // * @return 按 1e18 比例计算的汇率
+    // function exchangeRateCurrent() public returns (uint) {
     function exchangeRateCurrent() public nonReentrant returns (uint) {
         // 计算累积利率 没有报错
         require(accrueInterest() == uint(Error.NO_ERROR), "accrue interest failed");
@@ -392,7 +397,6 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     // * @return 按 1e18 比例计算的汇率
     function exchangeRateStored() public view returns (uint) {
         (MathError err, uint result) = exchangeRateStoredInternal();
-        console.log("result", result);
         require(err == MathError.NO_ERROR, "exchangeRateStored: exchangeRateStoredInternal failed");
         return result;
     }
@@ -458,6 +462,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     *直到当前块并将新的检查点写入存储。
     */
     // 计算 累计利率     借款利率
+    // 计算总利息
     function accrueInterest() public returns (uint) {
         /* Remember the initial block number */
         // 获取当前区块
@@ -579,7 +584,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     // * @return（uint，uint）错误代码（0=成功，否则为失败，请参阅ErrorReporter.sol）和实际的薄荷金额。
     // 供应功能允许供应商将资产转移到货币市场。然后，该资产开始根据该资产的当前供应利率累计利息。
     function mintInternal(uint mintAmount) internal nonReentrant returns (uint, uint) {
-        // 计算累计利率
+        // 计算利息
         uint error = accrueInterest();
         if (error != uint(Error.NO_ERROR)) {
             // accrueInterest emits logs on errors, but we still want to log the fact that an attempted borrow failed
@@ -689,6 +694,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     */
     //  获取全部赎回数量情况下 cToken对换token得数量
     // 提款功能将用户的资产从货币市场转回给用户，具有降低协议中用户的供给平衡的作用。
+    // 根据最新的汇率计算cToken能换多少标的资产
     function redeemInternal(uint redeemTokens) internal nonReentrant returns (uint) {
         // 计算汇率
         uint error = accrueInterest();
@@ -708,6 +714,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     * @return uint 0=成功，否则为失败（有关详细信息，请参阅ErrorReporter.sol）
     */
     //  获取 统计用户输入， cToken对换指定数量的token
+    // 根据传入标的资产数量能换多少cToken 然后提取
     function redeemUnderlyingInternal(uint redeemAmount) internal nonReentrant returns (uint) {
         // 计算汇率
         uint error = accrueInterest();
@@ -723,11 +730,11 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     struct RedeemLocalVars {
         Error err;
         MathError mathErr;
-        uint exchangeRateMantissa;
-        uint redeemTokens;
-        uint redeemAmount;
-        uint totalSupplyNew;
-        uint accountTokensNew;
+        uint exchangeRateMantissa;  //  利息
+        uint redeemTokens;          //  赎回数量
+        uint redeemAmount;          //  赎回指定数量
+        uint totalSupplyNew;        //  总量
+        uint accountTokensNew;      //  
     }
 
     /**
@@ -741,11 +748,10 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     //  计算 赎回 cToken 兑换 token 数量
     function redeemFresh(
         address payable redeemer, //    用户地址
-        uint redeemTokensIn,    //  赎回token数量
-        uint redeemAmountIn     //  用户输入数量
+        uint redeemTokensIn,    //  赎回cToken数量
+        uint redeemAmountIn     //  赎回标的资产数量
     ) internal returns (uint) {
-        // 两个输入必须有一个为0
-        // 为什么呢？ 
+        // 必须有一个情况是0
         require(redeemTokensIn == 0 || redeemAmountIn == 0, "one of redeemTokensIn or redeemAmountIn must be zero");
 
         RedeemLocalVars memory vars;
@@ -759,6 +765,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
 
         /* If redeemTokensIn > 0: */
         // 赎回cToken大于 0 
+        // 根据cToken算能换多少标的资产数量
         if (redeemTokensIn > 0) {
             /*
              * 计算兑换率和待赎回标的金额：
@@ -767,27 +774,28 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             vars.redeemTokens = redeemTokensIn;
             // redeemAmount = redeemTokensIn x exchangeRateCurrent
 
-            // 计算兑换汇率
+            // 标的资产数量 == 存款利率 * 全部额度
             (vars.mathErr, vars.redeemAmount) = mulScalarTruncate(Exp({mantissa: vars.exchangeRateMantissa}), redeemTokensIn);
             // console.log("vars.redeemAmount > 0", vars.redeemAmount);
             if (vars.mathErr != MathError.NO_ERROR) {
                 return failOpaque(Error.MATH_ERROR, FailureInfo.REDEEM_EXCHANGE_TOKENS_CALCULATION_FAILED, uint(vars.mathErr));
             }
-        } else {
+        }
+        // 根据传入标的资产数量能换多少cToken
+        else {
             /*
              * 获得当前汇率并计算要兑换的金额：
              *  redeemTokens = redeemAmountIn / exchangeRate
              *  redeemAmount = redeemAmountIn
              */
-
+            // cToken的数量 = 标的资产数量 / 汇率
             (vars.mathErr, vars.redeemTokens) = divScalarByExpTruncate(redeemAmountIn, Exp({mantissa: vars.exchangeRateMantissa}));
             if (vars.mathErr != MathError.NO_ERROR) {
                 return failOpaque(Error.MATH_ERROR, FailureInfo.REDEEM_EXCHANGE_AMOUNT_CALCULATION_FAILED, uint(vars.mathErr));
             }
     
-            // 价格？
+            // 赎回的额度
             vars.redeemAmount = redeemAmountIn;
-            // console.log("vars.redeemTokens <", vars.redeemTokens);
         }
         // console.log("vars.redeemTokens",vars.redeemTokens);
         // console.log("vars.redeemAmount 价格",vars.redeemAmount);
@@ -888,9 +896,11 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         address payable borrower,   //  借钱地址
         uint borrowAmount       //  借钱数量
     ) internal returns (uint) {
+        console.log("borrowFresh");
         /* Fail if borrow not allowed */
         // 检查用户是否允许借款
         uint allowed = comptroller.borrowAllowed(address(this), borrower, borrowAmount);
+        console.log("111",allowed);
         // console.log("allowed", allowed);
         if (allowed != 0) {
             return failOpaque(Error.COMPTROLLER_REJECTION, FailureInfo.BORROW_COMPTROLLER_REJECTION, allowed);
@@ -950,6 +960,12 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         accountBorrows[borrower].principal = vars.accountBorrowsNew;
         accountBorrows[borrower].interestIndex = borrowIndex;
         totalBorrows = vars.totalBorrowsNew;
+        console.log(
+            "借钱",
+            accountBorrows[borrower].principal,
+            accountBorrows[borrower].interestIndex, 
+            totalBorrows
+        );
         // console.log("accountBorrows[borrower].principal", accountBorrows[borrower].principal);
         // console.log("accountBorrows[borrower].interestIndex", accountBorrows[borrower].interestIndex);
         // console.log("totalBorrows", totalBorrows);

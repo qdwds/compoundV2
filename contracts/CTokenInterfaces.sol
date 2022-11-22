@@ -67,8 +67,7 @@ contract CTokenStorage {
 
     /**
      * @notice Fraction of interest currently set aside for reserves
-     * 目前为准备金预留的利息分数
-     * 储备金的利率？？
+     * 市场储备金的利率
      */
     uint public reserveFactorMantissa;
 
@@ -85,9 +84,9 @@ contract CTokenStorage {
     uint public borrowIndex;
 
     /**
-     * @notice 该市场标的资产的未偿还借款总额
+     * @notice 该市场标的资产的未偿还借款总额 = 市场总借款额度
      */
-    // 精度为underlying asset 的精度，会累加到利息
+
     uint public totalBorrows;
 
     /**

@@ -1,9 +1,10 @@
+import { parseEther } from "ethers/lib/utils";
 import { writeFileSync } from "fs";
 import { ethers } from "hardhat";
 import { join, resolve } from "path";
 import { cEtherDeploy, cEther__setReserveFactor, cEther__supportMarket } from "./CEther.module";
 import { compTokenDeploy, setCompAddress } from "./comp.module";
-import { unitollerDeploy, comptrollerG7Deploy, unitoller__setPendingImplementation, ccomptrollerG7__setLiquidationIncentive, comptrollerG7__become, comptrollerG7__setCloseFactor, comptrollerG7__setPriceOracle, comptrollerG7__setCollateralFactor } from "./comptroller.module";
+import { unitollerDeploy, comptrollerDeploy, unitoller__setPendingImplementation, ccomptroller__setLiquidationIncentive, comptroller__become, comptroller__setCloseFactor, comptroller__setPriceOracle, comptroller__setCollateralFactor } from "./comptroller.module";
 import { erc20TokenDeploy, CErc20DelegateDeploy, cErc20DelegatorDeploy, cToken__setReserveFactor, cErc20Delegator_supportMarket } from "./cToken.module";
 import { jumpRateModelV2Deploy } from "./interestRate.module";
 import { simplePriceOracleDeploy, simplePriceOracle_setUnderlyingPrice } from "./priceOracle.module";
@@ -20,7 +21,7 @@ async function main() {
   // 代理合约
   const unitoller = await unitollerDeploy();
   //  控制合约
-  const comptrollerG7 = await comptrollerG7Deploy();
+  const comptroller = await comptrollerDeploy();
 
   // 预言机
   const simplePriceOracle = await simplePriceOracleDeploy();
@@ -30,13 +31,13 @@ async function main() {
    * 因为Comptroller 交给 Unitroller 代理了，所以对外需要提供 Unitroller 。
    */
   // 设置管理员 代理绑定 转移所有权
-  await unitoller__setPendingImplementation(unitoller.address, comptrollerG7.address);
+  await unitoller__setPendingImplementation(unitoller.address, comptroller.address);
   // 设置g7代理合约地址 新的 Comptroller 接受所有权
-  await comptrollerG7__become(comptrollerG7.address, unitoller.address);
-  await comptrollerG7__setCloseFactor(comptrollerG7.address);
-  await ccomptrollerG7__setLiquidationIncentive(comptrollerG7.address);
+  await comptroller__become(comptroller.address, unitoller.address);
+  await comptroller__setCloseFactor(comptroller.address);
+  await ccomptroller__setLiquidationIncentive(comptroller.address);
   // 设置预言机
-  await comptrollerG7__setPriceOracle(comptrollerG7.address, simplePriceOracle.address)
+  await comptroller__setPriceOracle(comptroller.address, simplePriceOracle.address)
 
   // 拐点型利率模型 ctoken = toekn。 eth = eth
   const cTokenJumpRateModelV2 = await jumpRateModelV2Deploy(owner);
@@ -47,27 +48,28 @@ async function main() {
   const cErc20Delegate = await CErc20DelegateDeploy();
   // erc20Token 真实token 兑换 cerc20Token
   // 该方法就是 用token 还ctoken， 只能是传入的token兑换，其他token无法兑换
-  const cErc20Delegator = await cErc20DelegatorDeploy(erc20Token.address, unitoller.address, cTokenJumpRateModelV2.address, owner, cErc20Delegate.address)
+  const cErc20Delegator = await cErc20DelegatorDeploy(erc20Token.address, comptroller.address, cTokenJumpRateModelV2.address, owner, cErc20Delegate.address)
+  // ⚠️： 这里使用 unitoller 还是comptroller??????
+  const cEther = await cEtherDeploy(comptroller.address, etherJumpRateModelV2.address, owner);
 
-  const cEther = await cEtherDeploy(unitoller.address, etherJumpRateModelV2.address, owner);
+  // 加入市场
+  await cErc20Delegator_supportMarket(comptroller.address, cErc20Delegator.address);
+  await cEther__supportMarket(comptroller.address, cEther.address);
 
   // 设置市场价格 市场价格 根据  1 * 10 ** 18 == 1USDT 计算
   // cToken 价格
-  // await simplePriceOracle_setUnderlyingPrice(simplePriceOracle.address, cErc20Delegator.address, parseEther("1"));
-  // // await simplePriceOracle_setUnderlyingPrice(simplePriceOracle.address, erc20Token.address, parseEther("1"))
-  // await simplePriceOracle_setUnderlyingPrice(simplePriceOracle.address, cEther.address, parseEther("2"));
+  await simplePriceOracle_setUnderlyingPrice(simplePriceOracle.address, cErc20Delegator.address, parseEther("1"));
+  // await simplePriceOracle_setUnderlyingPrice(simplePriceOracle.address, erc20Token.address, parseEther("1"))
+  // eth 有自己的设置价格吗？为啥报错？
+  await simplePriceOracle_setUnderlyingPrice(simplePriceOracle.address, cEther.address, parseEther("2000"));
 
   // 设置保证金系数
   await cToken__setReserveFactor(cErc20Delegator.address);
   await cEther__setReserveFactor(cEther.address);
 
-  // 加入市场
-  await cErc20Delegator_supportMarket(comptrollerG7.address, cErc20Delegator.address);
-  await cEther__supportMarket(comptrollerG7.address, cEther.address);
-
+  
   // 设置抵押率
-  await comptrollerG7__setCollateralFactor(comptrollerG7.address, cErc20Delegator.address);
-
+  await comptroller__setCollateralFactor(comptroller.address, cErc20Delegator.address);
 
 
   // tokens
@@ -76,7 +78,7 @@ async function main() {
   const info = {
     comp: comp.address,
     unitoller: unitoller.address,
-    comptrollerG7: comptrollerG7.address,
+    comptroller: comptroller.address,
     simplePriceOracle: simplePriceOracle.address,
     etherJumpRateModelV2: etherJumpRateModelV2.address,
     cTokenJumpRateModelV2: cTokenJumpRateModelV2.address,
@@ -88,7 +90,7 @@ async function main() {
 
   }
 
-  const infoPath = resolve(join(__dirname,"../abi/address.json"));
+  const infoPath = resolve(join(__dirname, "../abi/address.json"));
   await writeFileSync(infoPath, JSON.stringify(info));
   console.log(info);
 

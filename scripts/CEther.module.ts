@@ -14,7 +14,7 @@ export const cEtherDeploy = async (
         unitrollerAddress,
         etherJumpRateModelV2Address,
         parseEther("1"),
-        "COMPOUND ETHER",
+        "COMPOUND ETH",
         "cETH",
         "18",
         owner

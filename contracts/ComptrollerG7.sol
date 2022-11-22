@@ -111,6 +111,7 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
     */
     // * @return 是否进入每个相应市场的成功指标
     // 部署抵押token
+    // 开启抵押
     function enterMarkets(address[] memory cTokens) public returns (uint[] memory) {
         uint len = cTokens.length;
 

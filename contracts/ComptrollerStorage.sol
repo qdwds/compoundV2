@@ -109,7 +109,7 @@ contract ComptrollerV3Storage is ComptrollerV2Storage {
     // 市场状态
     struct CompMarketState {
         /// @notice The market's last updated compBorrowIndex or compSupplyIndex
-        // 下标
+        // 下标 使用率
         uint224 index;
 
         /// @notice The block number the index was last updated at
