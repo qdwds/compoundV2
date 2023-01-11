@@ -37,7 +37,7 @@ export const cErc20DelegatorDeploy =async (
         erc20Address,  //  erc20 token address
         comptrollerAddress, //  comptroller address
         jumpRateModelV2Address, //  jumpRateModelV2 address
-        parseEther("0.5"),              //  初始汇率，按 1：1 设置，本文 1 * 10 ^ 18
+        parseEther("0.1"),  // 1个token 可以还  1 / 0.1(10)个cToken
         "COPM USD", //  name
         "cUSD",     //  symbol
         "18",       //  decimals

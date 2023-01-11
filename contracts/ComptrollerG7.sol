@@ -85,22 +85,22 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
     /*** Assets You Are In ***/
 
     /**
-     * @notice Returns the assets an account has entered
-     * @param account The address of the account to pull assets for
-     * @return A dynamic list with the assets the account has entered
-     */
+      * @notice 返回账户输入的资产
+      * @param account 拉取资产的账户地址
+      * @return 账户输入资产的动态列表
+      */
     function getAssetsIn(address account) external view returns (CToken[] memory) {
         CToken[] memory assetsIn = accountAssets[account];
-
         return assetsIn;
     }
 
     /**
-     * @notice Returns whether the given account is entered in the given asset
-     * @param account The address of the account to check
-     * @param cToken The cToken to check
-     * @return True if the account is in the asset, otherwise false.
-     */
+      * @notice 查询指定账户是否在指定资产中有额度
+      * @param account 要检查的账户地址
+      * @param cToken 需要检查的cToken
+      * @return 如果帐户在资产中，则返回 True，否则返回 false。
+      */
+
     function checkMembership(address account, CToken cToken) external view returns (bool) {
         return markets[address(cToken)].accountMembership[account];
     }
@@ -628,7 +628,6 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
         // 没有找到对应变量 函数
         // console.log("CToken(cTokenCollateral.comptroller())", CToken(cTokenCollateral.comptroller()));
         // console.log("CToken(cTokenCollateral.cTokenBorrowed())", CToken(cTokenCollateral.cTokenBorrowed()));
-
 
         // 两个审计地址不能相同？？？
         if (CToken(cTokenCollateral).comptroller() != CToken(cTokenBorrowed).comptroller()) {
@@ -1321,10 +1320,11 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
     }
 
     /**
-    * @notice 计算供应商应计的 COMP 并可能将其转移给他们
-    * @param cToken 供应商互动的市场
-    * @param supplier 将 COMP 分发到的供应商地址
+    * @notice 计算调用者应计的 COMP 并可能将其转移给他们
+    * @param cToken 调用者互动的市场
+    * @param supplier 将 COMP 分发到的调用者地址
     */
+    //  当前用户此前未结算的存款产出的 COMP
     function distributeSupplierComp(address cToken, address supplier) internal {
         // 获取comp供应状态
         CompMarketState storage supplyState = compSupplyState[cToken];
@@ -1341,10 +1341,10 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
         }
         // 当前指数 - 最后一次更新指数 == 相差指数
         Double memory deltaIndex = sub_(supplyIndex, supplierIndex);
-        // 获取供应商的额度
+        // 获取调用者的额度
         uint supplierTokens = CToken(cToken).balanceOf(supplier);
         console.log("supplierTokens", supplierTokens);
-        // 供应商额度 * 相差指数 = 奖励的数量
+        // 调用者额度 * 相差指数 = 奖励的数量
         uint supplierDelta = mul_(supplierTokens, deltaIndex);
         console.log("supplierDelta", supplierDelta);
         // 未提现 + 奖励数量 = 总奖励(未体现)

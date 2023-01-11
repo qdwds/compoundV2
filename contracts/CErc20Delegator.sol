@@ -164,14 +164,15 @@ contract CErc20Delegator is CTokenInterface, CErc20Interface, CDelegatorInterfac
         return abi.decode(data, (uint));
     }
 
+
     /**
-     * @notice The sender liquidates the borrowers collateral.
-     *  The collateral seized is transferred to the liquidator.
-     * @param borrower The borrower of this cToken to be liquidated
-     * @param cTokenCollateral The market in which to seize collateral from the borrower
-     * @param repayAmount The amount of the underlying borrowed asset to repay
-     * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
-     */
+      * @notice 发件人清算借款人的抵押品。
+      * 扣押的抵押品被转移给清算人。
+      * @param borrower 要清算的cToken的借款人
+      * @param cTokenCollateral 从借款人那里获取抵押品的市场
+      * @param repayAmount 需要偿还的标的借入资产的数量
+      * @return uint 0=成功，否则失败（详见ErrorReporter.sol）
+      */
     // 清算
     // 任何人都能调用这个函数，调用可以承当 清算人、直接借款人、还款金额、清算的ctoken资产。
     // 清算人帮借款人还款时，可以得到借款人所抵押的 等价值+清算奖励的ctoken资产

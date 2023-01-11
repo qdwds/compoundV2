@@ -34,13 +34,13 @@ export const kink = parseEther("0.75");
 // address payable admin_,                               应该是时间锁定合约地址，此处设为 msg.sender
 // address implementation_,                              CErc20Delegate 合约地址，见5.2节
 // bytes memory becomeImplementationData,  额外初始数据，此处填入0x，即无数据
-export const underlying;
-export const comptroller;
-export const interestRateModel;
-export const initialExchangeRateMantissa;
-export const name;
-export const symbol;
-export const decimals;
-export const admin;
-export const implementation;
-export const becomeImplementationData;
+// export const underlying;
+// export const comptroller;
+// export const interestRateModel;
+// export const initialExchangeRateMantissa;
+// export const name;
+// export const symbol;
+// export const decimals;
+// export const admin;
+// export const implementation;
+// export const becomeImplementationData;

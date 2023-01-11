@@ -207,10 +207,10 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     }
 
     /**
-     * @notice Get the token balance of the `owner`
-     * @param owner The address of the account to query
-     * @return The number of tokens owned by `owner`
-     */
+      * @notice 获取`owner`的代币余额
+      * @param owner 要查询的账户地址
+      * @return `owner` 拥有的代币数量
+      */
     // 当前账户的存款余额
     function balanceOf(address owner) external view returns (uint256) {
         return accountTokens[owner];
@@ -223,6 +223,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
       */
     //   * @return `owner` 拥有的底层证券数量
     // 基础资金余额 =  供应余额
+    // 获取标的资产的数量
     function balanceOfUnderlying(address owner) external returns (uint) {
         // 获取最新汇率
         Exp memory exchangeRate = Exp({mantissa: exchangeRateCurrent()});
@@ -231,6 +232,8 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         (MathError mErr, uint balance) = mulScalarTruncate(exchangeRate, accountTokens[owner]);
         // console.log("balance", balance);
         require(mErr == MathError.NO_ERROR, "balance could not be calculated");
+        console.log("balance",balance);
+        emit BalanceOfUnderlying(balance);  //  自己添加事件 获取额度
         return balance;
     }
 
@@ -239,7 +242,8 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     * @dev 这被主计长用来更有效地执行流动性检查。
     * @param account 要快照的账户地址
     */
-    // * @return（可能的错误，代币余额，借入余额，汇率尾数）
+    // * @return（可能的错误，cToken代币余额，借入余额，汇率尾数）
+    // 获取当前用户的 cToken额度  借款额度 汇率
     function getAccountSnapshot(address account) external view returns (uint, uint, uint, uint) {
         // 用户余额
         uint cTokenBalance = accountTokens[account];
@@ -263,7 +267,12 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         }
 
         // console.log("exchangeRateMantissa",exchangeRateMantissa);
-        return (uint(Error.NO_ERROR), cTokenBalance, borrowBalance, exchangeRateMantissa);
+        return (
+            uint(Error.NO_ERROR), 
+            cTokenBalance, //   CTOKEN 额度
+            borrowBalance,  //  借款额度
+            exchangeRateMantissa    // 汇率
+        );
     }
 
    /**
@@ -314,7 +323,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     * @param account 更新borrowIndex后应计算其余额的地址
     */
     // * @return 计算的余额
-    // 用户借款额度包含利息
+    // 用户借款额度包含利息 借钱肯定借的是基础资产(标的资产)
     // function borrowBalanceCurrent(address account) external returns (uint) {
     function borrowBalanceCurrent(address account) external nonReentrant returns (uint) {
         // 计算累积利率
@@ -338,7 +347,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     }
 
     /**
-    * @notice 根据存储的数据返回账户的借入余额
+    * @notice 根据存储的数据返回账户的借入余额  当前账户借款额度
     * @param account 需要计算余额的地址
     */
 //    @return（错误代码，计算的余额，如果错误代码非零，则为 0）
@@ -373,7 +382,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         if (mathErr != MathError.NO_ERROR) {
             return (mathErr, 0);
         }
-        console.log("result 借款额度", result);
+        console.log("当前账户借款额度",result);
         return (MathError.NO_ERROR, result);
     }
 
@@ -478,7 +487,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
 
         /* Read the previous values out of storage */
         // 地秤资产余额，总借款，总储备金，借款指数
-        // 资金池剩余的余额
+        // 资金池剩余的标的资产余额
         uint cashPrior = getCashPrior();
         // 之前借款额度 总借款额度
         uint borrowsPrior = totalBorrows;
@@ -570,7 +579,12 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         totalReserves = totalReservesNew;   //  储备金总量
 
         /* We emit an AccrueInterest event */
-        emit AccrueInterest(cashPrior, interestAccumulated, borrowIndexNew, totalBorrowsNew);
+        emit AccrueInterest(
+            cashPrior,  //  标的资产总额度
+            interestAccumulated,    //  利息 
+            borrowIndexNew,     
+            totalBorrowsNew
+        );
         // // console.log("Error.NO_ERROR",Error.NO_ERROR);
         return uint(Error.NO_ERROR);
     }
@@ -616,9 +630,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         
         /* Fail if mint not allowed */
         // 检查是否允许铸币 代币是否上市
-        console.log(address(this));
         uint allowed = comptroller.mintAllowed(address(this), minter, mintAmount);
-        console.log("isAllowed", allowed);
         // 这里居然检查的不是error.noerror
         if (allowed != 0) {
             return (failOpaque(Error.COMPTROLLER_REJECTION, FailureInfo.MINT_COMPTROLLER_REJECTION, allowed), 0);
@@ -713,8 +725,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     * @param redeemAmount 从兑换 cTokens中获得的基础金额
     * @return uint 0=成功，否则为失败（有关详细信息，请参阅ErrorReporter.sol）
     */
-    //  获取 统计用户输入， cToken对换指定数量的token
-    // 根据传入标的资产数量能换多少cToken 然后提取
+    // 根据传入标的资产数量  兑换出 标的资产 发送给用户。
     function redeemUnderlyingInternal(uint redeemAmount) internal nonReentrant returns (uint) {
         // 计算汇率
         uint error = accrueInterest();
@@ -723,7 +734,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             return fail(Error(error), FailureInfo.REDEEM_ACCRUE_INTEREST_FAILED);
         }
         // redeemFresh emits redeem-specific logs on errors, so we don't need to
-        // 计算最新赎回数量
+        // 赎回标的资产
         return redeemFresh(msg.sender, 0, redeemAmount);
     }
 
@@ -766,6 +777,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         /* If redeemTokensIn > 0: */
         // 赎回cToken大于 0 
         // 根据cToken算能换多少标的资产数量
+        // 要么输入cToken 要么 输入标的资产 肯定只能存在一个。
         if (redeemTokensIn > 0) {
             /*
              * 计算兑换率和待赎回标的金额：
@@ -1004,7 +1016,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
       * @param repayAmount 还款金额
       * @return (uint, uint) 错误码（0=成功，否则失败，见ErrorReporter.sol），实际还款金额。
       */
-    //  还款 我帮别人还款，只能还50%
+    //  还款 我帮别人还款，可以全部还或者还一部分
     function repayBorrowBehalfInternal(address borrower, uint repayAmount) internal nonReentrant returns (uint, uint) {
         // 计算利息
         uint error = accrueInterest();
@@ -1037,9 +1049,9 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
       */
     // 还款函数
     function repayBorrowFresh(
-        address payer, 
-        address borrower, 
-        uint repayAmount
+        address payer, // 还款人
+        address borrower,   //  给谁还
+        uint repayAmount    //  额度
     ) internal returns (uint, uint) {
         /* Fail if repayBorrow not allowed */
         // 检查账户是否允许还款。 只检查了是否上市
@@ -1087,6 +1099,8 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
           * 如果出现任何问题，doTransferIn 会恢复，因为我们无法确定是否发生了副作用。
           * 在收费的情况下，它会返回实际转账的金额。
           */
+        //  转移token方法 cErc20 和cEth中自己实现
+        // 获取借款额度
         vars.actualRepayAmount = doTransferIn(payer, vars.repayAmount);
 
         /*
@@ -1096,7 +1110,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         // 账户借款新 = 账户借款 - 实际还款额
         //  accountBorrowsNew = accountBorrows - actualRepayAmount
         (vars.mathErr, vars.accountBorrowsNew) = subUInt(vars.accountBorrows, vars.actualRepayAmount);
-        require(vars.mathErr == MathError.NO_ERROR, "REPAY_BORROW_NEW_ACCOUNT_BORROW_BALANCE_CALCULATION_FAILED");
+        require(vars.mathErr == MathError.NO_ERROR, "REPAY_BORROW_NEW_ACCOUNT_BORROW_BALANCE_CALCULATION_FAILED");// 还款_借款_新账户_借款_余额_计算失败
 
         // 总借款新 = 总借款 - 实际还款额
         // totalBorrowsNew = totalBorrows - actualRepayAmount
@@ -1107,7 +1121,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         accountBorrows[borrower].principal = vars.accountBorrowsNew;    //  借款额度
         accountBorrows[borrower].interestIndex = borrowIndex;           //  借款指标
         totalBorrows = vars.totalBorrowsNew;    //  借款总量
-
+        console.log("jiekuang",accountBorrows[borrower].principal, accountBorrows[borrower].interestIndex,totalBorrows);
         /* We emit a RepayBorrow event */
         emit RepayBorrow(payer, borrower, vars.actualRepayAmount, vars.accountBorrowsNew, vars.totalBorrowsNew);
 
@@ -1129,6 +1143,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     // 清算
     // 如果用户的总资产/未偿还的借贷支持 < 抵押率  就会触发清算
     // 如果发生清算，则清算人可以代表被清算的个人（也称为清算人）偿还部分或全部未偿还的借款。
+    //  清算人最多只能清算借款人额度的50%
     function liquidateBorrowInternal(
         address borrower,   //  帮哪个用户还钱
         uint repayAmount,   //  还多少钱
@@ -1194,6 +1209,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
 
         /* Fail if repayAmount = 0 */
         // 清算额度不能是 0
+        console.log("清算额度",repayAmount);
         if (repayAmount == 0) {
             return (fail(Error.INVALID_CLOSE_AMOUNT_REQUESTED, FailureInfo.LIQUIDATE_CLOSE_AMOUNT_IS_ZERO), 0);
         }
@@ -1207,7 +1223,11 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
 
         /* Fail if repayBorrow fails */
         // 给指定地址还款
-        (uint repayBorrowError, uint actualRepayAmount) = repayBorrowFresh(liquidator, borrower, repayAmount);
+        (uint repayBorrowError, uint actualRepayAmount) = repayBorrowFresh(
+            liquidator, //  清算人
+            borrower,   //  借款人
+            repayAmount //  清算额度
+        );
         if (repayBorrowError != uint(Error.NO_ERROR)) {
             return (fail(Error(repayBorrowError), FailureInfo.LIQUIDATE_REPAY_BORROW_FRESH_FAILED), 0);
         }

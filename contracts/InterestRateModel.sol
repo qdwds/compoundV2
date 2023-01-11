@@ -26,13 +26,13 @@ contract InterestRateModel {
      * @param cash 市场拥有的现金总量
      * @param borrows 市场未偿还的借款总额
      * @param 储备 市场拥有的储备总量
-     * @param reserveFactorMantissa 市场当前的储备因子
+     * @param reserveFactorMantissa 市场当前的储备因子  储备金率
      */
     //  * @return 每个区块的供应率（百分比，按 1e18 缩放）
     function getSupplyRate(
         uint cash,
         uint borrows,
         uint reserves,
-        uint reserveFactorMantissa
+        uint reserveFactorMantissa 
     ) external view returns (uint);
 }

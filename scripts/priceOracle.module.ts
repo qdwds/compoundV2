@@ -1,6 +1,6 @@
 // 代理合约
 
-import { BigNumber } from "ethers";
+import { BigNumber, Signer } from "ethers";
 import { formatEther } from "ethers/lib/utils";
 import { ethers } from "hardhat";
 import { contractAbi } from "../utils/contractInfo";
@@ -17,10 +17,10 @@ export const simplePriceOracleDeploy = async () => {
 }
 
 // 设置市场价格
-export const simplePriceOracle_setUnderlyingPrice = async (simplePriceOracleAddress: string, cToken: string, underlyingPriceMantissa: BigNumber) => {
-    const simple = await ethers.getContractAt(simplePriceOracleName, simplePriceOracleAddress);
+export const simplePriceOracle_setUnderlyingPrice = async (signer:Signer,simplePriceOracleAddress: string, cToken: string, underlyingPriceMantissa: BigNumber) => {
+    const simple = await ethers.getContractAt(simplePriceOracleName, simplePriceOracleAddress, signer);
     // 部署cEth 消耗gas比较多
-    const tx = await simple.setUnderlyingPrice(cToken, underlyingPriceMantissa,{gasLimit: 5000000}).catch(err => console.log(err));
+    await simple.setUnderlyingPrice(cToken, underlyingPriceMantissa, { gasLimit: 3000000 }).catch(err => console.log(err));
     // await simple.setUnderlyingPrice(cToken, underlyingPriceMantissa).catch(err => console.log(err));
     console.log(`simplePriceOracle_setUnderlyingPrice call success ${cToken} ${formatEther(underlyingPriceMantissa)}$ !!`)
 }

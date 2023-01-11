@@ -156,7 +156,7 @@ contract BaseJumpRateModelV2 {
      * @param cash 市场上的现金数量
      * @param borrows 市场上的借款数量
      * @param reserves 市场上的准备金数量
-     * @param reserveFactorMantissa 市场的当前储备因子
+     * @param reserveFactorMantissa 市场的当前储备因子 储备金率
      */
     //  * @return 每个块的供应率百分比作为尾数（按 1e18 缩放）
     // 存款利率

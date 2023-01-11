@@ -380,6 +380,8 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
         if (err != Error.NO_ERROR) {
             return uint(err);
         }
+        console.log("流动性",shortfall);
+        // 流动性不足
         if (shortfall > 0) {
             return uint(Error.INSUFFICIENT_LIQUIDITY);
         }
@@ -484,30 +486,36 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
         uint repayAmount) external returns (uint) {
         // Shh - currently unused
         liquidator;
-
+        // 检查两个代币是否上市
         if (!markets[cTokenBorrowed].isListed || !markets[cTokenCollateral].isListed) {
             return uint(Error.MARKET_NOT_LISTED);
         }
-
+        //  获取借款人余额
         uint borrowBalance = CToken(cTokenBorrowed).borrowBalanceStored(borrower);
 
         /* allow accounts to be liquidated if the market is deprecated */
+        // 判断是否是否被弃用 如果市场被弃用，允许清算账户
         if (isDeprecated(CToken(cTokenBorrowed))) {
+            // 不能偿还超过借款总额
             require(borrowBalance >= repayAmount, "Can not repay more than the total borrow");
         } else {
             /* The borrower must have shortfall in order to be liquidatable */
+            // 获取流动性
             (Error err, , uint shortfall) = getAccountLiquidityInternal(borrower);
             if (err != Error.NO_ERROR) {
                 return uint(err);
             }
-            // 健康状态 => 就不能进行清算
+            // 流动性不足
             if (shortfall == 0) {
+                console.log("不能清算");
                 return uint(Error.INSUFFICIENT_SHORTFALL);
             }
 
             /* The liquidator may not repay more than what is allowed by the closeFactor */
+            // 清算人不得偿还超过 closeFactor 允许的数额 50%
             uint maxClose = mul_ScalarTruncate(Exp({mantissa: closeFactorMantissa}), borrowBalance);
             // 清算额度超过计算额度  返回错误
+            console.log(repayAmount,maxClose);
             if (repayAmount > maxClose) {
                 return uint(Error.TOO_MUCH_REPAY);
             }
@@ -1453,6 +1461,6 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
      * @return The address of COMP
      */
     function getCompAddress() public view returns (address) {
-        return /**start*/0x5Ffe31E4676D3466268e28a75E51d1eFa4298620/**end*/;
+        return /**start*/0xdB05A386810c809aD5a77422eb189D36c7f24402/**end*/;
     }
 }

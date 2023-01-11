@@ -188,9 +188,17 @@ contract CErc20 is CToken, CErc20Interface {
       * 见这里：https://medium.com/coinmonks/missing-return-value-bug-at-least-130-tokens-affected-d67bf08521ca
       */
     //  ERC20 transferFrom。 form => contract
-    function doTransferIn(address from, uint amount) internal returns (uint) {
+    function doTransferIn(
+      address from, //  从这个账户中还款
+      uint amount   //  还款数量
+    ) internal returns (uint) {
+        //  类似一个ERC20的接口
         EIP20NonStandardInterface token = EIP20NonStandardInterface(underlying);
+        // ERC20接口 获取当前合约中cToken的余额
         uint balanceBefore = EIP20Interface(underlying).balanceOf(address(this));
+		console.log(underlying,balanceBefore);
+        // addres => contract 指定数量cToken
+        //  还款账户合约转移指定数量的cToken
         token.transferFrom(from, address(this), amount);
 
         bool success;
@@ -207,11 +215,13 @@ contract CErc20 is CToken, CErc20Interface {
                     revert(0, 0)
                 }
         }
-        console.log("success", success);
         require(success, "TOKEN_TRANSFER_IN_FAILED");
 
         // 余额校验： 计算*实际*转移的金额
         uint balanceAfter = EIP20Interface(underlying).balanceOf(address(this));
+		console.log(
+			"balanceAfter",balanceAfter
+		);
         require(balanceAfter >= balanceBefore, "TOKEN_TRANSFER_IN_OVERFLOW");
         return balanceAfter - balanceBefore;   // underflow already checked above, just subtract
     }

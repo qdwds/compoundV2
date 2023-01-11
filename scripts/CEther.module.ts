@@ -3,6 +3,16 @@ import { ethers } from "hardhat";
 import { contractAbi } from "../utils/contractInfo";
 
 const CEtherName = "CEther";
+const WET9NAME = "WETH9";
+
+// WET
+// export const weth9Deploy = async() => {
+//     const WETH9 = await ethers.getContractFactory(WET9NAME);
+//     const weth9 = await WETH9.deploy();
+//     await weth9.deployed();
+//     await contractAbi(weth9.address, WET9NAME);
+//     return weth9;
+// }
 
 export const cEtherDeploy = async (
     unitrollerAddress: string,

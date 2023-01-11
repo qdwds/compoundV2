@@ -121,6 +121,7 @@ contract ComptrollerV3Storage is ComptrollerV2Storage {
     CToken[] public allMarkets;
 
     /// @notice The rate at which the flywheel distributes COMP, per block
+    // comp 分配速率
     uint public compRate;
 
     /// @notice The portion of compRate that each market currently receives
@@ -132,6 +133,7 @@ contract ComptrollerV3Storage is ComptrollerV2Storage {
     mapping(address => CompMarketState) public compSupplyState;
 
     /// @notice The COMP market borrow state for each market
+    // 每个市场的 COMP 市场借入状态
     mapping(address => CompMarketState) public compBorrowState;
 
     /// @notice The COMP borrow index for each market for each supplier as of the last time they accrued COMP

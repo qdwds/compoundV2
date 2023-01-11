@@ -226,7 +226,8 @@ contract CTokenInterface is CTokenStorage {
      */
     event Failure(uint error, uint info, uint detail);
 
-
+    //  自己添加，获取当前用户标的资产的数量
+    event BalanceOfUnderlying(uint balance);
     /*** User Interface ***/
 
     function transfer(address dst, uint amount) external returns (bool);
@@ -260,8 +261,8 @@ contract CTokenInterface is CTokenStorage {
 
 contract CErc20Storage {
     /**
-     * @notice Underlying asset for this CToken
-     */
+     *@notice 此 CToken 的基础资产
+    */
     address public underlying;
 }
 
@@ -270,14 +271,17 @@ contract CErc20Interface is CErc20Storage {
     /*** User Interface ***/
     // 存款
     function mint(uint mintAmount) external returns (uint);
-    // 取款
+    // 取款 按cToken数量取
     function redeem(uint redeemTokens) external returns (uint);
-    // 取指定额度
+    // 取款 按标的资产取数量取
     function redeemUnderlying(uint redeemAmount) external returns (uint);
     // 借款
     function borrow(uint borrowAmount) external returns (uint);
+    // 自己还款
     function repayBorrow(uint repayAmount) external returns (uint);
+    // 我帮别人还款
     function repayBorrowBehalf(address borrower, uint repayAmount) external returns (uint);
+    // 清算
     function liquidateBorrow(address borrower, uint repayAmount, CTokenInterface cTokenCollateral) external returns (uint);
     function sweepToken(EIP20NonStandardInterface token) external;
 
