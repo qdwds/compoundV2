@@ -13,7 +13,7 @@ export const jumpRateModelV2Deploy = async (owner: string) => {
         jumpMultiplierPerYear, 
         kink, 
         owner
-    );console.log(await jumpRateModelV2.kink())
+    );
     await jumpRateModelV2.deployed();
     await contractAbi(jumpRateModelV2.address, JumpRateModelV2Name);
     return jumpRateModelV2;

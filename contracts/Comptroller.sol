@@ -362,7 +362,7 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
             // it should be impossible to break the important invariant
             assert(markets[cToken].accountMembership[borrower]);
         }
-        console.log("oracle.getUnderlyingPrice(CToken(cToken))", oracle.getUnderlyingPrice(CToken(cToken)));
+        //  获取cToken价格
         if (oracle.getUnderlyingPrice(CToken(cToken)) == 0) {
             return uint(Error.PRICE_ERROR);
         }
@@ -380,7 +380,7 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
         if (err != Error.NO_ERROR) {
             return uint(err);
         }
-        console.log("流动性",shortfall);
+        console.log("允许借款流动性",shortfall);
         // 流动性不足
         if (shortfall > 0) {
             return uint(Error.INSUFFICIENT_LIQUIDITY);
@@ -425,12 +425,13 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
         address cToken,
         address payer,
         address borrower,
-        uint repayAmount) external returns (uint) {
+        uint repayAmount
+    ) external returns (uint) {
         // Shh - currently unused
         payer;
         borrower;
         repayAmount;
-
+        // 是否上市
         if (!markets[cToken].isListed) {
             return uint(Error.MARKET_NOT_LISTED);
         }
@@ -505,9 +506,10 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
             if (err != Error.NO_ERROR) {
                 return uint(err);
             }
+            console.log("是否允许清算流动性：",shortfall);
             // 流动性不足
             if (shortfall == 0) {
-                console.log("不能清算");
+                console.log("流动性不足，不能清算!");
                 return uint(Error.INSUFFICIENT_SHORTFALL);
             }
 
@@ -531,6 +533,7 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
      * @param borrower The address of the borrower
      * @param actualRepayAmount The amount of underlying being repaid
      */
+    //  审计合约审计是否清算成功
     function liquidateBorrowVerify(
         address cTokenBorrowed,
         address cTokenCollateral,
@@ -685,11 +688,11 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
     }
 
     /**
-     * @notice Determine the current account liquidity wrt collateral requirements
-     * @return (possible error code (semi-opaque),
-                account liquidity in excess of collateral requirements,
-     *          account shortfall below collateral requirements)
-     */
+      * @notice 确定当前账户流动性wrt抵押品要求
+      * return（可能的错误代码（半不透明），
+                 超过抵押品要求的账户流动性，
+      * 低于抵押品要求的账户差额）
+      */
     // 获取用户的资产状况
     function getAccountLiquidity(address account) public view returns (uint, uint, uint) {
         // liquidity 剩余的可借额度(用户抵押的总价值)
@@ -729,58 +732,75 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
     }
 
     /**
-     * @notice Determine what the account liquidity would be if the given amounts were redeemed/borrowed
-     * @param cTokenModify The market to hypothetically redeem/borrow in
-     * @param account The account to determine liquidity for
-     * @param redeemTokens The number of tokens to hypothetically redeem
-     * @param borrowAmount The amount of underlying to hypothetically borrow
-     * @dev Note that we calculate the exchangeRateStored for each collateral cToken using stored data,
-     *  without calculating accumulated interest.
-     * @return (possible error code,
-                hypothetical account liquidity in excess of collateral requirements,
-     *          hypothetical account shortfall below collateral requirements)
-     */
+      * @notice 确定如果给定金额被赎回/借入，账户流动性将是多少
+      * @param cTokenModify 假设赎回/借入的市场
+      * @param account 确定流动性的账户
+      * @param redeemTokens 假设赎回的代币数量
+      * @param borrowAmount 假设借入的基础资产数量
+      * @dev 请注意，我们使用存储的数据为每个抵押品 cToken 计算 exchangeRateStored，
+      * 不计算累积利息。
+      * return（可能的错误代码，
+                 假设账户流动性超过抵押品要求，
+      * 假设账户缺口低于抵押品要求）
+      */
     // 计算当前用户的总持仓资产价值 是否大于总借贷价值
     function getHypotheticalAccountLiquidityInternal(
-        address account,
-        CToken cTokenModify,
-        uint redeemTokens,
-        uint borrowAmount) internal view returns (Error, uint, uint) {
+        address account,    //  查询的用户
+        CToken cTokenModify,    //  cToken
+        uint redeemTokens,  //  假设赎回的代币数量
+        uint borrowAmount   //  假设介入的代币数量
+    ) internal view returns (Error, uint, uint) {
 
+        // 保存数据
         AccountLiquidityLocalVars memory vars; // Holds all our calculation results
         uint oErr;
 
         // For each asset the account is in
         CToken[] memory assets = accountAssets[account];
+        
         for (uint i = 0; i < assets.length; i++) {
             CToken asset = assets[i];
-
+            console.log("asset",address(asset));
             // Read the balances and exchange rate from the cToken
-            (oErr, vars.cTokenBalance, vars.borrowBalance, vars.exchangeRateMantissa) = asset.getAccountSnapshot(account);
+
+            // 获取当前用户中的cToken中的信息
+            (oErr, 
+                vars.cTokenBalance, //  cToken额度
+                vars.borrowBalance, //  借款额度
+                vars.exchangeRateMantissa   //  汇率
+            ) = asset.getAccountSnapshot(account);
             if (oErr != 0) { // semi-opaque error code, we assume NO_ERROR == 0 is invariant between upgrades
                 return (Error.SNAPSHOT_ERROR, 0, 0);
             }
+            // 获取用户资产抵押率
             vars.collateralFactor = Exp({mantissa: markets[address(asset)].collateralFactorMantissa});
+            // 汇率
             vars.exchangeRate = Exp({mantissa: vars.exchangeRateMantissa});
 
             // Get the normalized price of the asset
+            // 获取当前资产的价格
             vars.oraclePriceMantissa = oracle.getUnderlyingPrice(asset);
             if (vars.oraclePriceMantissa == 0) {
                 return (Error.PRICE_ERROR, 0, 0);
-            }
+            }// 设置价格
             vars.oraclePrice = Exp({mantissa: vars.oraclePriceMantissa});
 
             // Pre-compute a conversion factor from tokens -> ether (normalized price value)
+            // 从代币 -> 以太币（标准化价格值）预先计算一个转换因子
+            // 单个货币价值？ =（资产抵押率 * 汇率） * 价格
             vars.tokensToDenom = mul_(mul_(vars.collateralFactor, vars.exchangeRate), vars.oraclePrice);
-
+            console.log("vars.sumCollateral 总抵押品",vars.sumCollateral);
             // sumCollateral += tokensToDenom * cTokenBalance
+            // 单个货币价值 * cToken额度 + 总抵押品 = 总抵押品
             vars.sumCollateral = mul_ScalarTruncateAddUInt(vars.tokensToDenom, vars.cTokenBalance, vars.sumCollateral);
+            console.log("vars.sumCollateral 总抵押品",vars.sumCollateral);
 
             // sumBorrowPlusEffects += oraclePrice * borrowBalance
-            // 
+            // 借款额度 = 价格 * 借款数量
             vars.sumBorrowPlusEffects = mul_ScalarTruncateAddUInt(vars.oraclePrice, vars.borrowBalance, vars.sumBorrowPlusEffects);
 
             // Calculate effects of interacting with cTokenModify
+            // 当前货币 = 借入资产
             if (asset == cTokenModify) {
                 // redeem effect
                 // sumBorrowPlusEffects += tokensToDenom * redeemTokens
@@ -793,11 +813,13 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
         }
 
         // These are safe, as the underflow condition is checked first
-        // liquidity 可借额度 (总抵押 - 总债务)
-        // shortfall 超过额度 (总债务 - 总抵押)
+        // liquidity 剩余的可借额度 (总抵押 - 总债务)
+        // shortfall 可以清算  (总债务 - 总抵押)
         if (vars.sumCollateral > vars.sumBorrowPlusEffects) {
+            console.log("vars.sumCollateral - vars.sumBorrowPlusEffects",vars.sumCollateral - vars.sumBorrowPlusEffects);
             return (Error.NO_ERROR, vars.sumCollateral - vars.sumBorrowPlusEffects, 0);
         } else {
+            console.log("vars.sumBorrowPlusEffects - vars.sumCollateral", vars.sumBorrowPlusEffects - vars.sumCollateral);
             return (Error.NO_ERROR, 0, vars.sumBorrowPlusEffects - vars.sumCollateral);
         }
     }
@@ -884,13 +906,14 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
     }
 
     /**
-      * @notice Sets the collateralFactor for a market
-      * @dev Admin function to set per-market collateralFactor
-      * @param cToken The market to set the factor on
-      * @param newCollateralFactorMantissa The new collateral factor, scaled by 1e18
-      * @return uint 0=success, otherwise a failure. (See ErrorReporter for details)
-      */
+       * @notice 设置市场的 collateralFactor
+       * @dev Admin 函数来设置每个市场的抵押品因子
+       * @param cToken 设置因子的市场
+       * @param newCollateralFactorMantissa 新的抵押因子，按 1e18 缩放
+       * @return uint 0=成功，否则失败。 （详见 ErrorReporter）
+       */
     //  开启质押因子
+    // 设置资产抵押率
     function _setCollateralFactor(CToken cToken, uint newCollateralFactorMantissa) external returns (uint) {
         // Check caller is admin
         if (msg.sender != admin) {
@@ -898,6 +921,7 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
         }
 
         // Verify market is listed
+        // 检查是否上市
         Market storage market = markets[address(cToken)];
         if (!market.isListed) {
             return fail(Error.MARKET_NOT_LISTED, FailureInfo.SET_COLLATERAL_FACTOR_NO_EXISTS);
@@ -906,21 +930,25 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
         Exp memory newCollateralFactorExp = Exp({mantissa: newCollateralFactorMantissa});
 
         // Check collateral factor <= 0.9
+        // 检查抵押因子 <= 0.9
         Exp memory highLimit = Exp({mantissa: collateralFactorMaxMantissa});
         if (lessThanExp(highLimit, newCollateralFactorExp)) {
             return fail(Error.INVALID_COLLATERAL_FACTOR, FailureInfo.SET_COLLATERAL_FACTOR_VALIDATION);
         }
 
         // If collateral factor != 0, fail if price == 0
+        // 如果抵押因子 != 0，如果价格 == 0 则失败
         if (newCollateralFactorMantissa != 0 && oracle.getUnderlyingPrice(cToken) == 0) {
             return fail(Error.PRICE_ERROR, FailureInfo.SET_COLLATERAL_FACTOR_WITHOUT_PRICE);
         }
 
         // Set market's collateral factor to new collateral factor, remember old value
+        // 将市场的抵押品因子设置为新的抵押品因子，记住旧值
         uint oldCollateralFactorMantissa = market.collateralFactorMantissa;
         market.collateralFactorMantissa = newCollateralFactorMantissa;
 
         // Emit event with asset, old collateral factor, and new collateral factor
+        // 触发事件
         emit NewCollateralFactor(cToken, oldCollateralFactorMantissa, newCollateralFactorMantissa);
 
         return uint(Error.NO_ERROR);
@@ -1461,6 +1489,6 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
      * @return The address of COMP
      */
     function getCompAddress() public view returns (address) {
-        return /**start*/0xdB05A386810c809aD5a77422eb189D36c7f24402/**end*/;
+        return /**start*/0x4Dd5336F3C0D70893A7a86c6aEBe9B953E87c891/**end*/;
     }
 }

@@ -7,7 +7,9 @@ contract ComptrollerInterface {
 
     /*** Assets You Are In ***/
     // 用户资产操作
+    // 进入市场， 只有进入市场 才能提供抵押品和借款功能。
     function enterMarkets(address[] calldata cTokens) external returns (uint[] memory);
+    // 退出市场
     function exitMarket(address cToken) external returns (uint);
 
     /*** Policy Hooks ***/

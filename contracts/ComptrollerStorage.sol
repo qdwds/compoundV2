@@ -63,12 +63,12 @@ contract ComptrollerV2Storage is ComptrollerV1Storage {
         bool isListed;
 
         /**
-         * @notice Multiplier representing the most one can borrow against their collateral in this market.
-         *  For instance, 0.9 to allow borrowing 90% of collateral value.
-         *  Must be between 0 and 1, and stored as a mantissa.
-         */
+          * @notice 乘数代表最多的人可以在这个市场上以他们的抵押品为抵押借款。
+          * 例如，0.9 允许借入抵押品价值的 90%。
+          * 必须在 0 和 1 之间，并作为尾数存储。
+          */
         // 抵押率
-        // 100usdc 可以抵押价值90usdc的资产
+        // 100usdc 可以抵押价值90usdc的资产 用做借贷
         uint collateralFactorMantissa;
 
         /// @notice 按市场映射“此资产中的账户”
@@ -125,7 +125,7 @@ contract ComptrollerV3Storage is ComptrollerV2Storage {
     uint public compRate;
 
     /// @notice The portion of compRate that each market currently receives
-    // 每个市场当前收到的compRate份额
+    // 每个市场当前收到的comp Rate份额
     mapping(address => uint) public compSpeeds;
 
     /// @notice The COMP market supply state for each market

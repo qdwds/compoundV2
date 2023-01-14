@@ -424,6 +424,7 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
         if (err != Error.NO_ERROR) {
             return uint(err);
         }
+        console.log("是否允许借钱流动性",shortfall);
         // 总借款额度 流动性不足
         if (shortfall > 0) {
             return uint(Error.INSUFFICIENT_LIQUIDITY);
@@ -578,6 +579,7 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
       * @param borrower 借款人地址
       * @param actualRepayAmount 被偿还的标的金额
       */
+    //  审计合约审计是否清算成功
     function liquidateBorrowVerify(
         address cTokenBorrowed,
         address cTokenCollateral,

@@ -52,10 +52,10 @@ contract BaseJumpRateModelV2 {
 
     /**
      * @notice 构建利率模型
-     * @param baseRatePerYear 近似目标基础 APR，尾数（按 1e18 缩放）
-     * @param multiplierPerYear 利率利用率的增长率（按 1e18 缩放）
-     * @param jumpMultiplierPerYear 达到指定使用点后的 multiplierPerBlock
-     * @param kink_ 应用跳转乘数的利用点
+     * @param baseRatePerYear 近似目标基础 APR，尾数（按 1e18 缩放）// 年基准利率
+     * @param multiplierPerYear 利率利用率的增长率（按 1e18 缩放）// 年利率乘数
+     * @param jumpMultiplierPerYear 达到指定使用点后的 multiplierPerBlock  // 拐点年利率乘数
+     * @param kink_ 应用跳转乘数的利用点 利率模型的拐点 // 拐点资金借出率
      * @param owner_ owner的地址，即Timelock合约（具有直接更新参数的能力）
      */
     constructor(
@@ -78,16 +78,16 @@ contract BaseJumpRateModelV2 {
 
     /**
      * @notice 更新利率模型的参数（只有所有者可以调用，即Timelock）
-     * @param baseRatePerYear 近似目标基础 APR，尾数（按 1e18 缩放）
-     * @param multiplierPerYear 利率利用率的增长率（按 1e18 缩放）
-     * @param jumpMultiplierPerYear 达到指定使用点后的 multiplierPerBlock
-     * @param kink_ 应用跳转乘数的利用点
+     * @param baseRatePerYear 近似目标基础 APR，尾数（按 1e18 缩放） // 年基准利率
+     * @param multiplierPerYear 利率利用率的增长率（按 1e18 缩放）// 年利率乘数
+     * @param jumpMultiplierPerYear 达到指定使用点后的 multiplierPerBlock // 拐点年利率乘数
+     * @param kink_ 应用跳转乘数的利用点  // 拐点资金借出率
      */
     function updateJumpRateModel(
         uint baseRatePerYear,
         uint multiplierPerYear,
         uint jumpMultiplierPerYear,
-        uint kink_
+        uint kink_  //  拐点
     ) external {
         require(msg.sender == owner, "only the owner may call this function.");
 

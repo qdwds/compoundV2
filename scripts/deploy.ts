@@ -45,12 +45,14 @@ async function main() {
   const etherJumpRateModelV2 = await jumpRateModelV2Deploy(owner);
 
 
+  // usdt => cUsdt
   const erc20Token = await erc20TokenDeploy();  //  不在compound合约中
   // const weth9 = await weth9Deploy();
   const cErc20Delegate = await CErc20DelegateDeploy();
   // erc20Token 真实token 兑换 cerc20Token
 
   // 该方法就是 用token 还ctoken， 只能是传入的token兑换，其他token无法兑换
+  // 等于部署cUSDT
   const cErc20Delegator = await cErc20DelegatorDeploy(
     erc20Token.address, 
     comptroller.address, 
@@ -63,7 +65,7 @@ async function main() {
     etherJumpRateModelV2.address, 
     owner
   );
-  console.log(await cEther.symbol())
+
   // 加入市场
   await cErc20Delegator_supportMarket(
     comptroller.address, 

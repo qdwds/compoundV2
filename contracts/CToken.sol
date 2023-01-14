@@ -419,6 +419,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     function exchangeRateStoredInternal() internal view returns (MathError, uint) {
         // 获取流通的代币总量   质押流通总数？？？？？
         uint _totalSupply = totalSupply;
+        // 首次创建 返回汇率为0
         if (_totalSupply == 0) {
             /*
              * If there are no tokens minted:
@@ -433,7 +434,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
              */
             // 获取资金池 余额
             uint totalCash = getCashPrior();
-            console.log(totalCash);
+            console.log("资金池余额",totalCash);
             uint cashPlusBorrowsMinusReserves;
             Exp memory exchangeRate;
             MathError mathErr;
@@ -442,17 +443,20 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             // console.log("totalReserves", totalReserves);
             //  totalCash + totalBorrows - totalReserves
             // 资金池余额 + 借款总量 - 总储备量
+
+            // 现金加借贷减储备  = totalCash(资金池余额) + totalBorrows(市场总借款额度) - totalReserves(资产储备金总额)
             (mathErr, cashPlusBorrowsMinusReserves) = addThenSubUInt(totalCash, totalBorrows, totalReserves);
             if (mathErr != MathError.NO_ERROR) {
                 return (mathErr, 0);
             }
             // console.log("cashPlusBorrowsMinusReserves", cashPlusBorrowsMinusReserves);
-            //  / 流通量总数
+            // 流通量总数
+            // 存款利率 = 现金加借贷减储备 / 流通代币总数
             (mathErr, exchangeRate) = getExp(cashPlusBorrowsMinusReserves, _totalSupply);
             if (mathErr != MathError.NO_ERROR) {
                 return (mathErr, 0);
             }
-            // console.log("exchangeRate 存款汇率", exchangeRate.mantissa);
+            console.log("exchangeRate 存款汇率", exchangeRate.mantissa);
             return (MathError.NO_ERROR, exchangeRate.mantissa);
         }
     }
@@ -601,6 +605,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         // 计算利息
         uint error = accrueInterest();
         if (error != uint(Error.NO_ERROR)) {
+            // 在同一区块的话 不执行
             // accrueInterest emits logs on errors, but we still want to log the fact that an attempted borrow failed
             return (fail(Error(error), FailureInfo.MINT_ACCRUE_INTEREST_FAILED), 0);
         }
@@ -632,6 +637,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         // 检查是否允许铸币 代币是否上市
         uint allowed = comptroller.mintAllowed(address(this), minter, mintAmount);
         // 这里居然检查的不是error.noerror
+        // 检查是否允许铸币和是否上市
         if (allowed != 0) {
             return (failOpaque(Error.COMPTROLLER_REJECTION, FailureInfo.MINT_COMPTROLLER_REJECTION, allowed), 0);
         }
@@ -662,6 +668,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         *现金。
         */
         //  cToken 和cEth 不通方法实现
+        // 当前合约调用转帐到当前合约 并且返回转移额度
         vars.actualMintAmount = doTransferIn(minter, mintAmount);
         // console.log("获取转账输入", vars.actualMintAmount);
         /*
@@ -669,6 +676,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
          *  mintTokens = actualMintAmount / exchangeRate
          */
         // mintTokens = actualMintAmount / exchangeRate
+        // 这次新增的数量 / 汇率 =  这次要创建的cToken
         (vars.mathErr, vars.mintTokens) = divScalarByExpTruncate(vars.actualMintAmount, Exp({mantissa: vars.exchangeRateMantissa}));
         require(vars.mathErr == MathError.NO_ERROR, "MINT_EXCHANGE_CALCULATION_FAILED");
 
@@ -914,6 +922,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         uint allowed = comptroller.borrowAllowed(address(this), borrower, borrowAmount);
         console.log("111",allowed);
         // console.log("allowed", allowed);
+        // 流动性不足
         if (allowed != 0) {
             return failOpaque(Error.COMPTROLLER_REJECTION, FailureInfo.BORROW_COMPTROLLER_REJECTION, allowed);
         }
@@ -926,6 +935,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         /* Fail gracefully if protocol has insufficient underlying cash */
         // console.log("getCashPrior() < borrowAmount", getCashPrior() < borrowAmount);
         if (getCashPrior() < borrowAmount) {
+            // 令牌现金不足
             return fail(Error.TOKEN_INSUFFICIENT_CASH, FailureInfo.BORROW_CASH_NOT_AVAILABLE);
         }
 
@@ -1724,6 +1734,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
       * @dev 这不包括当前消息的值，如果有的话
       */
     //   * @return 该合约拥有的底层证券数量
+    // 标的资产代币数量
     function getCashPrior() internal view returns (uint);
 
     /**

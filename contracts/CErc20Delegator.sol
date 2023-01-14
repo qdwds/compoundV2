@@ -11,8 +11,8 @@ import "hardhat/console.sol";
 contract CErc20Delegator is CTokenInterface, CErc20Interface, CDelegatorInterface {
     /**
     * @notice 构建一个新的货币市场
-    * @param underlying_ 标的资产地址
-    * @param comptroller_ 主计长地址
+    * @param underlying_ 标的资产地址 usdt
+    * @param comptroller_ 主计长地址 comptroller
     * @param interestRateModel_ 利率模型的地址
     * @param initialExchangeRateMantissa_ 初始汇率，按 1e18 缩放
     * @param name_ 此令牌的 ERC-20 名称
@@ -146,7 +146,7 @@ contract CErc20Delegator is CTokenInterface, CErc20Interface, CDelegatorInterfac
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
     // 还款
-    // 当指定额度为-1时，表示全额还款（还款额度，利息），否则会存在没有还完，因为每个区块都会产生利息
+    // 当指定额度为-1时，表示全额还款（还款额度，利息），否则会存在没有还完，因为每个区块都会产生利息uint(-1)
     function repayBorrow(uint repayAmount) external returns (uint) {
         bytes memory data = delegateToImplementation(abi.encodeWithSignature("repayBorrow(uint256)", repayAmount));
         return abi.decode(data, (uint));

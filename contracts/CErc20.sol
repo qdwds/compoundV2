@@ -188,17 +188,20 @@ contract CErc20 is CToken, CErc20Interface {
       * 见这里：https://medium.com/coinmonks/missing-return-value-bug-at-least-130-tokens-affected-d67bf08521ca
       */
     //  ERC20 transferFrom。 form => contract
+    // form 地址转账token到当前合约。返回转账了多少token额度到当前合约
     function doTransferIn(
       address from, //  从这个账户中还款
       uint amount   //  还款数量
     ) internal returns (uint) {
         //  类似一个ERC20的接口
+        // 利用erc20接口获取标的资产的合约
         EIP20NonStandardInterface token = EIP20NonStandardInterface(underlying);
         // ERC20接口 获取当前合约中cToken的余额
         uint balanceBefore = EIP20Interface(underlying).balanceOf(address(this));
-		console.log(underlying,balanceBefore);
+		    console.log("标的资产的额度",underlying,balanceBefore);
         // addres => contract 指定数量cToken
         //  还款账户合约转移指定数量的cToken
+        // 从form地址转转帐(标的资产)指定额度到当前合约中。
         token.transferFrom(from, address(this), amount);
 
         bool success;
@@ -215,14 +218,15 @@ contract CErc20 is CToken, CErc20Interface {
                     revert(0, 0)
                 }
         }
+        // 转账成功检测
         require(success, "TOKEN_TRANSFER_IN_FAILED");
 
-        // 余额校验： 计算*实际*转移的金额
+        // 获取当前合约最新余额
         uint balanceAfter = EIP20Interface(underlying).balanceOf(address(this));
-		console.log(
-			"balanceAfter",balanceAfter
-		);
+		  
+        //  检查最新额度必须大于原有额度
         require(balanceAfter >= balanceBefore, "TOKEN_TRANSFER_IN_OVERFLOW");
+        // 返回这次新增了多少额度
         return balanceAfter - balanceBefore;   // underflow already checked above, just subtract
     }
 

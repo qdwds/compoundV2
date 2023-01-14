@@ -67,7 +67,8 @@ export const comptroller__setCollateralFactor = async(comptrollerAddress:string,
     const comptroller = await ethers.getContractAt(comptrollerName,comptrollerAddress);
     // //  CToken cToken,CErc20Delegator.sol 地址
     // 0.6 * 10 ^ 18
-    await comptroller._setCollateralFactor(cErc20DelegatorAddress,parseEther("0.6"));    
+    // 100 * 0.75 = 75usdt
+    await comptroller._setCollateralFactor(cErc20DelegatorAddress,parseEther("0.75"));    
     console.log("comptroller__setCollateralFactor call success !!")
 }
 

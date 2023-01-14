@@ -4,13 +4,13 @@ import "./CarefulMath.sol";
 import "./ExponentialNoError.sol";
 
 /**
- * @title Exponential module for storing fixed-precision decimals
- * @author Compound
- * @dev Legacy contract for compatibility reasons with existing contracts that still use MathError
- * @notice Exp is a struct which stores decimals with a fixed precision of 18 decimal places.
- *         Thus, if we wanted to store the 5.1, mantissa would store 5.1e18. That is:
- *         `Exp({mantissa: 5100000000000000000})`.
- */
+  * @title 用于存储固定精度小数的指数模块
+  * @author 化合物
+  * @dev 遗留合约出于与仍然使用 MathError 的现有合约的兼容性原因
+  * @notice Exp 是一个结构，它以 18 位小数的固定精度存储小数。
+  * 因此，如果我们想存储 5.1，尾数将存储 5.1e18。 那是：
+  *`Exp（{尾数：5100000000000000000}）`。
+  */
 contract Exponential is CarefulMath, ExponentialNoError {
     /**
      * @dev Creates an exponential from numerator and denominator values.
@@ -18,11 +18,12 @@ contract Exponential is CarefulMath, ExponentialNoError {
      *            or if `denom` is zero.
      */
     function getExp(uint num, uint denom) pure internal returns (MathError, Exp memory) {
+        // scaledNumerator = num * 1e18
         (MathError err0, uint scaledNumerator) = mulUInt(num, expScale);
         if (err0 != MathError.NO_ERROR) {
             return (err0, Exp({mantissa: 0}));
         }
-
+        // scaledNumerator / denom
         (MathError err1, uint rational) = divUInt(scaledNumerator, denom);
         if (err1 != MathError.NO_ERROR) {
             return (err1, Exp({mantissa: 0}));

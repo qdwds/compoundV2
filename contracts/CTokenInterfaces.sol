@@ -4,6 +4,7 @@ import "./ComptrollerInterface.sol";
 import "./InterestRateModel.sol";
 import "./EIP20NonStandardInterface.sol";
 
+// 汇率 exchangeRate = (getCash() + totalBorrows() - totalReserves()) / totalSupply()
 contract CTokenStorage {
     /**
      * @dev 重新进入检查的保护变量
@@ -93,10 +94,10 @@ contract CTokenStorage {
      * @notice 在该市场持有的标的资产储备金总额
      */
     // 精度为 underlying asseet 的精度
-    uint public totalReserves;
+    uint public totalReserves;  //  市场总储备金
 
     /**
-     * @notice 流通中的代币总数
+     * @notice 流通中的代币总数 cToken
      */
     uint public totalSupply;
 
@@ -235,15 +236,21 @@ contract CTokenInterface is CTokenStorage {
     function approve(address spender, uint amount) external returns (bool);
     function allowance(address owner, address spender) external view returns (uint);
     function balanceOf(address owner) external view returns (uint);
+    // 资产基础余额
     function balanceOfUnderlying(address owner) external returns (uint);
     function getAccountSnapshot(address account) external view returns (uint, uint, uint, uint);
+    // 借款利率
     function borrowRatePerBlock() external view returns (uint);
+    // 市场供应率
     function supplyRatePerBlock() external view returns (uint);
+    // 市场总借款
     function totalBorrowsCurrent() external returns (uint);
+    // 借款余额
     function borrowBalanceCurrent(address account) external returns (uint);
     function borrowBalanceStored(address account) public view returns (uint);
     function exchangeRateCurrent() public returns (uint);
     function exchangeRateStored() public view returns (uint);
+    // 市场中的基础余额
     function getCash() external view returns (uint);
     function accrueInterest() public returns (uint);
     function seize(address liquidator, address borrower, uint seizeTokens) external returns (uint);
