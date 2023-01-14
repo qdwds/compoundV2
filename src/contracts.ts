@@ -11,7 +11,7 @@ export const createContracts = async (): Promise<any> => {
     const signers = await ethers.getSigners();
     const account = signers[1];
     const signer = signers[0];
-    const comptroller = await ethers.getContractAt("ComptrollerG7", address.comptroller, signer);
+    const comptroller = await ethers.getContractAt("Comptroller", address.comptroller, signer);
     const cErc20Delegator = await ethers.getContractAt("CErc20Delegator", address.cErc20Delegator, signer);
     const erc20Token = await ethers.getContractAt("ERC20Token", address.erc20Token, signer);
     const accountERC20 = await ethers.getContractAt("ERC20Token", address.erc20Token, account);

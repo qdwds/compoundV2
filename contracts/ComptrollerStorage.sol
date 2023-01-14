@@ -92,6 +92,7 @@ contract ComptrollerV2Storage is ComptrollerV1Storage {
     *允许用户删除自己的资产的操作不能暂停。
     *清算/扣押/转移只能在全球范围内暂停，不能按市场暂停。
     */
+    //  暂停
     address public pauseGuardian;
     // 不能存款
     bool public _mintGuardianPaused;
@@ -158,7 +159,7 @@ contract ComptrollerV4Storage is ComptrollerV3Storage {
 }
 
 contract ComptrollerV5Storage is ComptrollerV4Storage {
-    /// @notice 每个贡献者在每个区块中收到的 COMP 部分
+    /// @notice 每个贡献者在每个区块中收到的 COMP 部分 挖款速率
     mapping(address => uint) public compContributorSpeeds;
 
     /// @notice 分配贡献者的 COMP 奖励的最后一个区块

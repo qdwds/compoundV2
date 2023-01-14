@@ -1,6 +1,6 @@
 import { createContracts } from "../contracts";
 import { formatUnits, parseEther } from "ethers/lib/utils";
-import { color } from "./infomaction";
+import { color } from "../infomaction";
 
 
 // 自己给自己还钱 USDT

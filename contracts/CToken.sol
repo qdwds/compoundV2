@@ -1252,7 +1252,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
         require(amountSeizeError == uint(Error.NO_ERROR), "LIQUIDATE_COMPTROLLER_CALCULATE_AMOUNT_SEIZE_FAILED");
 
         /* Revert if borrower collateral token balance < seizeTokens */
-        // 检测借款人代币数量  >= 清算的数量
+        // 检测 借款人代币数量  >= 清算的数量
         require(cTokenCollateral.balanceOf(borrower) >= seizeTokens, "LIQUIDATE_SEIZE_TOO_MUCH");
 
         // If this is also the collateral, run seizeInternal to avoid re-entrancy, otherwise make an external call
@@ -1324,8 +1324,8 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
       */
     function seizeInternal(
         address seizerToken,
-        address liquidator, //  扣押清算账户  现100 ，清算40 ，扣压40 ？
-        address borrower,
+        address liquidator, //  扣押清算账户
+        address borrower,   //  
         uint seizeTokens
     ) internal returns (uint) {
         /* Fail if seize not allowed */

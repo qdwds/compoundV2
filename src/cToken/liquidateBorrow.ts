@@ -1,7 +1,7 @@
 import { createContracts } from "../contracts";
 import { formatUnits, parseEther, parseUnits } from "ethers/lib/utils";
 import { ethers } from "hardhat";
-import { marketInfo, blockInfo, userInfo, color } from "./infomaction";
+import { marketInfo, blockInfo, userInfo, color } from "../infomaction";
 import { BigNumber } from "ethers";
 /**
  * account借钱，signer清算
@@ -11,6 +11,10 @@ const balanceOfUnderlying = async (address:string) => {
     return `${(await (await accountCToken.balanceOfUnderlying(address)).wait()).events[1].args[0]}`
 }
 // 清算
+/**
+ * account 借钱
+ * signer 清算
+ */
 const liquidateBorrow = async () => {
     const { cErc20Delegator, erc20Token, oracle, cEther, account, signer, accountCToken, accountERC20, comptroller } = await createContracts();
     //  还原价格
@@ -27,17 +31,13 @@ const liquidateBorrow = async () => {
     // color.magenta(`account - erc20: ${formatUnits(await erc20Token.balanceOf(account.address))}`);
     // color.magenta(`account - 账户的存款额度(cToken)": ${formatUnits(await accountCToken.balanceOf(account.address))}`);
     // color.magenta(`account - 账户供应额度(标的资产)": ${formatUnits(b)}`);
-    console.log(formatUnits(BigNumber.from(b)));
-    console.log(formatUnits(BigNumber.from(b).mul(750)));
-    console.log(formatUnits(BigNumber.from(b).mul(750).div(1000)));
 
-    // account 借钱
+    // account 借钱 75%
     await accountCToken.borrow(BigNumber.from(b).mul(750).div(1000));
 
     //  account 借款额度
     const accountBorrow = await accountCToken.borrowBalanceStored(account.address);
 
-    color.magenta(`account - erc20: ${formatUnits(await erc20Token.balanceOf(account.address))}`);
     color.magenta(`account - 账户的存款额度(cToken)": ${formatUnits(await accountCToken.balanceOf(account.address))}`);
     color.magenta(`account - 账户供应额度(标的资产)": ${formatUnits(b)}`);
     color.magenta(`account - 账户借款余额（含利息): ${formatUnits(accountBorrow)}`);

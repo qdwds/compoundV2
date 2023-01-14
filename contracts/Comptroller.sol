@@ -389,6 +389,7 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
         // Keep the flywheel moving
         Exp memory borrowIndex = Exp({mantissa: CToken(cToken).borrowIndex()});
         updateCompBorrowIndex(cToken, borrowIndex);
+        // 更新借款 挖款奖励
         distributeBorrowerComp(cToken, borrower, borrowIndex);
 
         return uint(Error.NO_ERROR);
@@ -507,7 +508,7 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
                 return uint(err);
             }
             console.log("是否允许清算流动性：",shortfall);
-            // 流动性不足
+            // 流动性不足   判断是允许清算。只要  != 0 就是允许清算的。
             if (shortfall == 0) {
                 console.log("流动性不足，不能清算!");
                 return uint(Error.INSUFFICIENT_SHORTFALL);
@@ -1052,6 +1053,7 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
       * @param cTokens The addresses of the markets (tokens) to change the borrow caps for
       * @param newBorrowCaps The new borrow cap values in underlying to be set. A value of 0 corresponds to unlimited borrowing.
       */
+    //  设计借款额度上限，到达借款额度上限后无法在借出额度
     function _setMarketBorrowCaps(CToken[] calldata cTokens, uint[] calldata newBorrowCaps) external {
     	require(msg.sender == admin || msg.sender == borrowCapGuardian, "only admin or borrow cap guardian can set borrow caps"); 
 
@@ -1070,6 +1072,7 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
      * @notice Admin function to change the Borrow Cap Guardian
      * @param newBorrowCapGuardian The address of the new Borrow Cap Guardian
      */
+     //  设置可以设置借款上限的管理员地址
     function _setBorrowCapGuardian(address newBorrowCapGuardian) external {
         require(msg.sender == admin, "only admin can set borrow cap guardian");
 
@@ -1088,6 +1091,7 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
      * @param newPauseGuardian The address of the new Pause Guardian
      * @return uint 0=success, otherwise a failure. (See enum Error for details)
      */
+    //  设置可以暂停的地址
     function _setPauseGuardian(address newPauseGuardian) public returns (uint) {
         if (msg.sender != admin) {
             return fail(Error.UNAUTHORIZED, FailureInfo.SET_PAUSE_GUARDIAN_OWNER_CHECK);
@@ -1151,6 +1155,7 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
     /**
      * @notice Checks caller is admin, or this contract is becoming the new implementation
      */
+    // 判断是否为管理员或者审计长
     function adminOrInitializing() internal view returns (bool) {
         return msg.sender == admin || msg.sender == comptrollerImplementation;
     }
@@ -1158,31 +1163,35 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
     /*** Comp Distribution ***/
 
     /**
-     * @notice Set COMP speed for a single market
-     * @param cToken The market whose COMP speed to update
-     * @param supplySpeed New supply-side COMP speed for market
-     * @param borrowSpeed New borrow-side COMP speed for market
-     */
+      * @notice 为单一市场设置 COMP 速度
+      * @param cToken COMP 更新速度的市场
+      * @param supplySpeed 新的供应方 COMP 市场速度
+      * @param borrowSpeed 市场的新借方 COMP 速度
+      */
+    // 设置存款/借款 两个挖款速率（每个区块）
     function setCompSpeedInternal(CToken cToken, uint supplySpeed, uint borrowSpeed) internal {
+        // 检查是否上市。
         Market storage market = markets[address(cToken)];
         require(market.isListed, "comp market is not listed");
-
+        //  设置存款挖款速率
         if (compSupplySpeeds[address(cToken)] != supplySpeed) {
-            // Supply speed updated so let's update supply state to ensure that
-            //  1. COMP accrued properly for the old speed, and
-            //  2. COMP accrued at the new speed starts after this block.
+            // 供应速度已更新所以让我们更新供应状态以确保
+            // 1. COMP 为旧速度正确累积，并且
+            // 2. 在此块之后开始以新速度累积的 COMP。
+            // 更新存款指数
             updateCompSupplyIndex(address(cToken));
 
             // Update speed and emit event
             compSupplySpeeds[address(cToken)] = supplySpeed;
             emit CompSupplySpeedUpdated(cToken, supplySpeed);
         }
-
+        // 借款挖款速率
         if (compBorrowSpeeds[address(cToken)] != borrowSpeed) {
-            // Borrow speed updated so let's update borrow state to ensure that
-            //  1. COMP accrued properly for the old speed, and
-            //  2. COMP accrued at the new speed starts after this block.
+            // 借用速度已更新所以让我们更新借用状态以确保
+            // 1. COMP 为旧速度正确累积，并且
+            // 2. 在此块之后开始以新速度累积的 COMP。
             Exp memory borrowIndex = Exp({mantissa: cToken.borrowIndex()});
+            // 更新借款指数
             updateCompBorrowIndex(address(cToken), borrowIndex);
 
             // Update speed and emit event
@@ -1192,31 +1201,46 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
     }
 
     /**
-     * @notice Accrue COMP to the market by updating the supply index
-     * @param cToken The market whose supply index to update
-     * @dev Index is a cumulative sum of the COMP per cToken accrued.
-     */
+      * @notice 通过更新供应指数将 COMP 计入市场
+      * @param cToken 要更新供应指数的市场
+      * @dev 指数是每个 cToken 累积的 COMP 的总和。
+      */
+    //  存款挖款
     function updateCompSupplyIndex(address cToken) internal {
+        // 获取cToken的供应状态
         CompMarketState storage supplyState = compSupplyState[cToken];
+        // 每个区块的供应状态
         uint supplySpeed = compSupplySpeeds[cToken];
+        // 区块超过32位
         uint32 blockNumber = safe32(getBlockNumber(), "block number exceeds 32 bits");
+        // console.log("blockNumber",blockNumber);
+        // 新增区块
         uint deltaBlocks = sub_(uint(blockNumber), uint(supplyState.block));
+        // console.log("deltaBlocks",deltaBlocks);
+        // 新增区块和供应区块都大于0 说明不是同一个区块
         if (deltaBlocks > 0 && supplySpeed > 0) {
+            // cToken总量
             uint supplyTokens = CToken(cToken).totalSupply();
+            // 新区块 * 每个区块挖矿速率
             uint compAccrued = mul_(deltaBlocks, supplySpeed);
-            Double memory ratio = supplyTokens > 0 ? fraction(compAccrued, supplyTokens) : Double({mantissa: 0});
+            Double memory ratio = supplyTokens > 0 ?
+                fraction(compAccrued, supplyTokens) :
+                Double({mantissa: 0});
             supplyState.index = safe224(add_(Double({mantissa: supplyState.index}), ratio).mantissa, "new index exceeds 224 bits");
             supplyState.block = blockNumber;
-        } else if (deltaBlocks > 0) {
+        } 
+        // 只有新增区块大于0 更新 供应区块 = 当前区块。
+        else if (deltaBlocks > 0) {
             supplyState.block = blockNumber;
         }
     }
 
     /**
-     * @notice Accrue COMP to the market by updating the borrow index
-     * @param cToken The market whose borrow index to update
-     * @dev Index is a cumulative sum of the COMP per cToken accrued.
-     */
+      * @notice 通过更新借入指数将 COMP 计入市场
+      * @param cToken 要更新借入指数的市场
+      * @dev 指数是每个 cToken 累积的 COMP 的总和。
+      */
+    //  借款挖款
     function updateCompBorrowIndex(address cToken, Exp memory marketBorrowIndex) internal {
         CompMarketState storage borrowState = compBorrowState[cToken];
         uint borrowSpeed = compBorrowSpeeds[cToken];
@@ -1234,54 +1258,63 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
     }
 
     /**
-     * @notice Calculate COMP accrued by a supplier and possibly transfer it to them
-     * @param cToken The market in which the supplier is interacting
-     * @param supplier The address of the supplier to distribute COMP to
-     */
+      * @notice 计算供应商应计的 COMP 并可能将其转移给他们
+      * @param cToken 供应商正在互动的市场
+      * @param supplier 将 COMP 分配给的供应商的地址
+      */
+    //  分发当前用户此前未结算的存款产出的 COMP
+    // 计算存款 当前未产出的COPM，只是更新当前用户的COMP数量，并未发送给用户
     function distributeSupplierComp(address cToken, address supplier) internal {
-        // TODO: Don't distribute supplier COMP if the user is not in the supplier market.
-        // This check should be as gas efficient as possible as distributeSupplierComp is called in many places.
-        // - We really don't want to call an external contract as that's quite expensive.
-
+        // TODO：如果用户不在供应商市场，则不要分发供应商 COMP。
+         // 由于在许多地方调用了 distributeSupplierComp，因此此检查应尽可能节省 gas。
+         // - 我们真的不想调用外部合约，因为它非常昂贵。
+        // 获取当前cToken的供应状态
         CompMarketState storage supplyState = compSupplyState[cToken];
+        // 使用率
         uint supplyIndex = supplyState.index;
+        // 借贷指数
         uint supplierIndex = compSupplierIndex[cToken][supplier];
 
-        // Update supplier's index to the current index since we are distributing accrued COMP
+        // 将供应商的索引更新为当前索引，因为我们正在分配应计 COMP
+        // 更新借贷指数(使用率)
         compSupplierIndex[cToken][supplier] = supplyIndex;
-
+        // 贷款指数==0 和 借款指数要大于 1e36
         if (supplierIndex == 0 && supplyIndex >= compInitialIndex) {
-            // Covers the case where users supplied tokens before the market's supply state index was set.
-            // Rewards the user with COMP accrued from the start of when supplier rewards were first
-            // set for the market.
+            // 涵盖用户在设置市场供应状态指数之前提供代币的情况。
+            // 从供应商奖励开始时开始累积的 COMP 奖励用户
+            // 为市场设置。
             supplierIndex = compInitialIndex;
         }
 
-        // Calculate change in the cumulative sum of the COMP per cToken accrued
+        // 计算累积的每个 cToken 的 COMP 累积总和的变化
         Double memory deltaIndex = Double({mantissa: sub_(supplyIndex, supplierIndex)});
-
+        // 获取用户余额
         uint supplierTokens = CToken(cToken).balanceOf(supplier);
 
         // Calculate COMP accrued: cTokenAmount * accruedPerCToken
+        // supplierDelta = cTokenAmount * accruedPerCToken
+        // 用户贡献数量 = 用户余额 * 每个计算comp的累积总和
         uint supplierDelta = mul_(supplierTokens, deltaIndex);
-
+        // 当前用户所得comp 数量 = 未体现的 + 用户贡献数量
         uint supplierAccrued = add_(compAccrued[supplier], supplierDelta);
+        // 更新用户未体现的COPM 数量
         compAccrued[supplier] = supplierAccrued;
 
         emit DistributedSupplierComp(CToken(cToken), supplier, supplierDelta, supplyIndex);
     }
 
     /**
-     * @notice Calculate COMP accrued by a borrower and possibly transfer it to them
-     * @dev Borrowers will not begin to accrue until after the first interaction with the protocol.
-     * @param cToken The market in which the borrower is interacting
-     * @param borrower The address of the borrower to distribute COMP to
-     */
+      * @notice 计算借款人应计的 COMP 并可能将其转移给他们
+      * @dev 在第一次与协议交互之后，借款人才会开始累积。
+      * @param cToken 借款人正在互动的市场
+      * @param borrower 将 COMP 分配给借款人的地址
+      */
+     // 计算借款 当前未产出的COPM。只是更新当前用户的COMP数量，并未发送给用户
     function distributeBorrowerComp(address cToken, address borrower, Exp memory marketBorrowIndex) internal {
-        // TODO: Don't distribute supplier COMP if the user is not in the borrower market.
-        // This check should be as gas efficient as possible as distributeBorrowerComp is called in many places.
-        // - We really don't want to call an external contract as that's quite expensive.
-
+        // TODO：如果用户不在借款人市场，则不要分发供应商 COMP。
+        // 由于在许多地方调用了 distributeBorrowerComp，此检查应尽可能高效。
+        // - 我们真的不想调用外部合约，因为它非常昂贵。
+        // 当前cToken的市场借入状态
         CompMarketState storage borrowState = compBorrowState[cToken];
         uint borrowIndex = borrowState.index;
         uint borrowerIndex = compBorrowerIndex[cToken][borrower];
@@ -1311,35 +1344,45 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
     }
 
     /**
-     * @notice Calculate additional accrued COMP for a contributor since last accrual
-     * @param contributor The address to calculate contributor rewards for
-     */
+      * @notice 计算自上次应计以来贡献者的额外应计 COMP
+      * @param contributor 计算贡献者奖励的地址
+      */
+    //  更新未获取区块奖励数据。更新用户数据让用户获得最新comp奖励。只修改数据 不提币。
     function updateContributorRewards(address contributor) public {
+        // 用户贡献者未得到的comp数量
+        // 为什么会出现未获得简历的区块呢？  应为区块一直在增加 用户不能能每个区块都点击一次。
         uint compSpeed = compContributorSpeeds[contributor];
+        // console.log("未获得奖励的区块",compSpeed);
         uint blockNumber = getBlockNumber();
+        // 获取区块数量 = 区块 - 最后一个奖励的区块
         uint deltaBlocks = sub_(blockNumber, lastContributorBlock[contributor]);
+        // console.log("deltaBlocks", deltaBlocks);
+        // 区块数量 和 未收到的都大于 0 进去
         if (deltaBlocks > 0 && compSpeed > 0) {
             uint newAccrued = mul_(deltaBlocks, compSpeed);
             uint contributorAccrued = add_(compAccrued[contributor], newAccrued);
-
+            // 更新用户未体现的
             compAccrued[contributor] = contributorAccrued;
+            // 最后一个发送过奖励的区块
             lastContributorBlock[contributor] = blockNumber;
         }
     }
 
     /**
-     * @notice Claim all the comp accrued by holder in all markets
-     * @param holder The address to claim COMP for
-     */
+      * @notice 索取持有人在所有市场中应计的所有补偿
+      * @param holder 申领 COMP 的地址
+      */
+    //  领取所有市场 所得到的COMP
     function claimComp(address holder) public {
         return claimComp(holder, allMarkets);
     }
 
     /**
-     * @notice Claim all the comp accrued by holder in the specified markets
-     * @param holder The address to claim COMP for
-     * @param cTokens The list of markets to claim COMP in
-     */
+      * @notice 索取持有人在指定市场累积的所有补偿
+      * @param holder 申领 COMP 的地址
+      * @param cTokens 申领 COMP 的市场列表
+      */
+    //  领取指定市场所得到的COMP
     function claimComp(address holder, CToken[] memory cTokens) public {
         address[] memory holders = new address[](1);
         holders[0] = holder;
@@ -1347,72 +1390,95 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
     }
 
     /**
-     * @notice Claim all comp accrued by the holders
-     * @param holders The addresses to claim COMP for
-     * @param cTokens The list of markets to claim COMP in
-     * @param borrowers Whether or not to claim COMP earned by borrowing
-     * @param suppliers Whether or not to claim COMP earned by supplying
-     */
-    function claimComp(address[] memory holders, CToken[] memory cTokens, bool borrowers, bool suppliers) public {
+      * @notice 索取持有人应计的所有补偿
+      * @param holders 申领 COMP 的地址
+      * @param cTokens 申领 COMP 的市场列表
+      * @param borrowers 是否索取借贷所得的COMP
+      * @param suppliers 是否索取通过供应获得的 COMP
+      */
+    function claimComp(
+        address[] memory holders,   //  领取的地址
+        CToken[] memory cTokens,    //  领取的cToken地址
+        bool borrowers, //  是否领取借贷COMP奖励
+        bool suppliers //  是否领取存款COMP奖励
+    ) public {
         for (uint i = 0; i < cTokens.length; i++) {
             CToken cToken = cTokens[i];
+            // 是否上市
             require(markets[address(cToken)].isListed, "market must be listed");
             if (borrowers == true) {
                 Exp memory borrowIndex = Exp({mantissa: cToken.borrowIndex()});
+                // 更新当前用户借款COMP奖励
                 updateCompBorrowIndex(address(cToken), borrowIndex);
                 for (uint j = 0; j < holders.length; j++) {
+                    // 获取借款未产出区块 奖励的COPM
                     distributeBorrowerComp(address(cToken), holders[j], borrowIndex);
                 }
             }
             if (suppliers == true) {
+                // 更新当前用户存款COMP奖励
                 updateCompSupplyIndex(address(cToken));
                 for (uint j = 0; j < holders.length; j++) {
+                    // 获取存款未产出区块 奖励的COPM
                     distributeSupplierComp(address(cToken), holders[j]);
                 }
             }
         }
         for (uint j = 0; j < holders.length; j++) {
+            // 将未获取的COMP全部发送给调用者
             compAccrued[holders[j]] = grantCompInternal(holders[j], compAccrued[holders[j]]);
         }
     }
 
     /**
-     * @notice Transfer COMP to the user
-     * @dev Note: If there is not enough COMP, we do not perform the transfer all.
-     * @param user The address of the user to transfer COMP to
-     * @param amount The amount of COMP to (possibly) transfer
-     * @return The amount of COMP which was NOT transferred to the user
-     */
+      * @notice 将 COMP 转移给用户
+      * @dev 注意：如果没有足够的 COMP，我们不会执行全部传输。
+      * @param user 将COMP转入的用户地址
+      * @param amount 要（可能）转移的 COMP 数量
+      * @return 未转移给用户的 COMP 数量
+      */
+    //  将所有市场中的COMP发送给用户
     function grantCompInternal(address user, uint amount) internal returns (uint) {
+        // 循环所有市场
         for (uint i = 0; i < allMarkets.length; ++i) {
             address market = address(allMarkets[i]);
-
+            // 返回 每个区块产生COMP的借款速度
             bool noOriginalSpeed = compBorrowSpeeds[market] == 0;
+            // 返回 供应商存款指数
             bool invalidSupply = noOriginalSpeed && compSupplierIndex[market][user] > 0;
+            // 返回 供应商借款指数
             bool invalidBorrow = noOriginalSpeed && compBorrowerIndex[market][user] > 0;
 
+            // 如果有一个存在那么久返回对应输入的值。
             if (invalidSupply || invalidBorrow) {
+                // console.log("amount",amount);
                 return amount;
             }
         }
-
+        // 获取COPM简历的地址
         Comp comp = Comp(getCompAddress());
+        // 查询当前合约的COMP余额
         uint compRemaining = comp.balanceOf(address(this));
+        
+        // 输入有值，输入的值 要小于当前合约的余额
         if (amount > 0 && amount <= compRemaining) {
+            // 给调用者转帐
             comp.transfer(user, amount);
             return 0;
         }
+        // 返回发送的额度
         return amount;
     }
 
     /*** Comp Distribution Admin ***/
 
     /**
-     * @notice Transfer COMP to the recipient
-     * @dev Note: If there is not enough COMP, we do not perform the transfer all.
-     * @param recipient The address of the recipient to transfer COMP to
-     * @param amount The amount of COMP to (possibly) transfer
-     */
+      * @notice 将 COMP 转移给接收者
+      * @dev 注意：如果没有足够的 COMP，我们不会执行全部传输。
+      * @param recipient 将 COMP 转入的收件人地址
+      * @param amount 要（可能）转移的 COMP 数量
+      */
+    //  转移移
     function _grantComp(address recipient, uint amount) public {
         require(adminOrInitializing(), "only admin can grant comp");
         uint amountLeft = grantCompInternal(recipient, amount);
@@ -1421,12 +1487,19 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
     }
 
     /**
-     * @notice Set COMP borrow and supply speeds for the specified markets.
-     * @param cTokens The markets whose COMP speed to update.
-     * @param supplySpeeds New supply-side COMP speed for the corresponding market.
-     * @param borrowSpeeds New borrow-side COMP speed for the corresponding market.
-     */
-    function _setCompSpeeds(CToken[] memory cTokens, uint[] memory supplySpeeds, uint[] memory borrowSpeeds) public {
+      * @notice 为指定市场设置 COMP 借入和供应速度。
+      * @param cTokens COMP 更新速度的市场。
+      * @param supplySpeeds 相应市场的存款 COMP 速度。
+      * @param borrowSpeeds 相应市场的借款 COMP 速度。
+      */
+    //  设置挖款COPM供应速率
+    // 开启挖矿奖励
+    // 速率是 每个区块的COMP（单位：wei）
+    function _setCompSpeeds(
+        CToken[] memory cTokens,    //  开启挖款奖励的cToken
+        uint[] memory supplySpeeds,     //  存款 挖款速率
+        uint[] memory borrowSpeeds      //  借款 挖款速率
+    ) public {
         require(adminOrInitializing(), "only admin can set comp speed");
 
         uint numTokens = cTokens.length;
@@ -1438,40 +1511,46 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
     }
 
     /**
-     * @notice Set COMP speed for a single contributor
-     * @param contributor The contributor whose COMP speed to update
-     * @param compSpeed New COMP speed for contributor
-     */
+      * @notice 为单个贡献者设置 COMP 速度
+      * @param contributor 其 COMP 更新速度的贡献者
+      * @param compSpeed 贡献者的新 COMP 速度
+      */
+    //  单独设置某个人的挖款速率 
     function _setContributorCompSpeed(address contributor, uint compSpeed) public {
         require(adminOrInitializing(), "only admin can set comp speed");
 
-        // note that COMP speed could be set to 0 to halt liquidity rewards for a contributor
+        // 请注意，COMP 速度可以设置为 0 以停止对贡献者的流动性奖励
+        // 更新未获取区块奖励
         updateContributorRewards(contributor);
         if (compSpeed == 0) {
             // release storage
+            // 清空 简历的最后一个区块
             delete lastContributorBlock[contributor];
         } else {
+            // 设置 奖励的最后一个区块
             lastContributorBlock[contributor] = getBlockNumber();
         }
+        // 贡献者的挖款速率
         compContributorSpeeds[contributor] = compSpeed;
 
         emit ContributorCompSpeedUpdated(contributor, compSpeed);
     }
 
     /**
-     * @notice Return all of the markets
-     * @dev The automatic getter may be used to access an individual market.
-     * @return The list of market addresses
-     */
+      * @notice 返回所有市场
+      * @dev 自动获取器可用于访问单个市场。
+      * @return 市场地址列表
+      */
     function getAllMarkets() public view returns (CToken[] memory) {
         return allMarkets;
     }
 
     /**
-     * @notice Returns true if the given cToken market has been deprecated
-     * @dev All borrows in a deprecated cToken market can be immediately liquidated
-     * @param cToken The market to check if deprecated
-     */
+      * @notice 如果给定的 cToken 市场已被弃用，则返回 true
+      * @dev 已弃用的 cToken 市场中的所有借款都可以立即清算
+      * @param cToken 检查是否弃用的市场
+      */
+    //  检查cToken是否被市场弃用
     function isDeprecated(CToken cToken) public view returns (bool) {
         return
             markets[address(cToken)].collateralFactorMantissa == 0 && 
@@ -1489,6 +1568,6 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
      * @return The address of COMP
      */
     function getCompAddress() public view returns (address) {
-        return /**start*/0x4Dd5336F3C0D70893A7a86c6aEBe9B953E87c891/**end*/;
+        return /**start*/0x81F82957608f74441E085851cA5Cc091b23d17A2/**end*/;
     }
 }

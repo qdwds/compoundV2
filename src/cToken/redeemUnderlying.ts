@@ -1,6 +1,6 @@
 import { createContracts } from "../contracts";
 import { formatUnits, parseUnits } from "ethers/lib/utils";
-import { color } from "./infomaction";
+import { color } from "../infomaction";
 import { mint } from "./mint";
 
 

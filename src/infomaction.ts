@@ -1,6 +1,6 @@
 import { CallTracker } from "assert";
 import { formatUnits } from "ethers/lib/utils";
-import { createContracts } from "../contracts";
+import { createContracts } from "./contracts";
 
 // 当前用户数据
 export const userInfo = async () => {

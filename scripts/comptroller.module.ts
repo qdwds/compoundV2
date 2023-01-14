@@ -42,7 +42,7 @@ export const comptroller__become = async(comptrollerAddress:string, unitrollerAd
 // 应该是设置清算比例
 export const comptroller__setCloseFactor =async (comptrollerAddress:string) => {
     const comptroller = await ethers.getContractAt(comptrollerName, comptrollerAddress);
-    await comptroller._setCloseFactor(settlementRate);   //  0.5
+    await comptroller._setCloseFactor(parseEther("0.5"));   //  0.5
     console.log("comptroller__setCloseFactor call  success !!");
 }
 
@@ -70,22 +70,4 @@ export const comptroller__setCollateralFactor = async(comptrollerAddress:string,
     // 100 * 0.75 = 75usdt
     await comptroller._setCollateralFactor(cErc20DelegatorAddress,parseEther("0.75"));    
     console.log("comptroller__setCollateralFactor call success !!")
-}
-
-// COMP奖励
-export const comptroller_setCompSpeed = async (comptrollerAddress:string,cTokenAddress:string) => {
-    const comptroller = await ethers.getContractAt(comptrollerName,comptrollerAddress);
-    /**
-     * 
-     * 计算compspeed：需要翻倍计算 ？？？ 
-        const cTokenAddress = '0xabc...';
-        const comptroller = new web3.eth.Contract(comptrollerAbi, comptrollerAddress);
-        let compSpeed = await comptroller.methods.compSpeeds(cTokenAddress).call();
-        compSpeed = compSpeed / 1e18;
-        // COMP issued to suppliers OR borrowers
-        const compSpeedPerDay = compSpeed * 4 * 60 * 24;
-        // COMP issued to suppliers AND borrowers
-        const compSpeedPerDayTotal = compSpeedPerDay * 2;
-     */
-    await comptroller._setCompSpeed(cTokenAddress, "1");
 }

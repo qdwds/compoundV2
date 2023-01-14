@@ -85,10 +85,11 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
     /*** Assets You Are In ***/
 
     /**
-      * @notice 返回账户输入的资产
+      * @notice 返回账户的资产列表
       * @param account 拉取资产的账户地址
       * @return 账户输入资产的动态列表
       */
+    //  获取当前用户有几种资产
     function getAssetsIn(address account) external view returns (CToken[] memory) {
         CToken[] memory assetsIn = accountAssets[account];
         return assetsIn;
@@ -882,9 +883,11 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
         // console.log("vars.sumCollateral > vars.sumBorrowPlusEffects","总抵押额度", vars.sumCollateral);
         // console.log( "总借款额度",vars.sumBorrowPlusEffects);
         if (vars.sumCollateral > vars.sumBorrowPlusEffects) {
+            // 借款额度
             // console.log("vars.sumCollateral - vars.sumBorrowPlusEffects, 0", vars.sumCollateral - vars.sumBorrowPlusEffects, 0);
             return (Error.NO_ERROR, vars.sumCollateral - vars.sumBorrowPlusEffects, 0);
         } else {
+            //  清算
             // console.log("0, vars.sumBorrowPlusEffects - vars.sumCollateral", 0, vars.sumBorrowPlusEffects - vars.sumCollateral);
             return (Error.NO_ERROR, 0, vars.sumBorrowPlusEffects - vars.sumCollateral);
         }
@@ -1109,15 +1112,22 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
        * @param cTokens 用于更改借贷上限的市场（代币）地址
        * @param newBorrowCaps 要设置的底层证券的新借入上限值。 值 0 对应于无限借用。
        */
-    function _setMarketBorrowCaps(CToken[] calldata cTokens, uint[] calldata newBorrowCaps) external {
+    //   设计借款额度上限，到达借款额度上限后无法在借出额度
+    function _setMarketBorrowCaps(
+        CToken[] calldata cTokens, 
+        uint[] calldata newBorrowCaps
+    ) external {
+        // borrowCapGuardian  可以设置借款上限的管理员
     	require(msg.sender == admin || msg.sender == borrowCapGuardian, "only admin or borrow cap guardian can set borrow caps"); 
 
         uint numMarkets = cTokens.length;
         uint numBorrowCaps = newBorrowCaps.length;
 
+        // 检查市场中的cToken数量，
         require(numMarkets != 0 && numMarkets == numBorrowCaps, "invalid input");
 
         for(uint i = 0; i < numMarkets; i++) {
+            // 设置cToken 借款上限
             borrowCaps[address(cTokens[i])] = newBorrowCaps[i];
             emit NewBorrowCap(cTokens[i], newBorrowCaps[i]);
         }
@@ -1127,6 +1137,7 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
       * @notice 管理员功能更改借用上限监护人
       * @param newBorrowCapGuardian 新借款上限监护人的地址
       */
+    //  设置可以设置借款上限的管理员地址
     function _setBorrowCapGuardian(address newBorrowCapGuardian) external {
         require(msg.sender == admin, "only admin can set borrow cap guardian");
 
@@ -1145,6 +1156,7 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
       * @param newPauseGuardian 新暂停守护者的地址
       * @return uint 0=成功，否则失败。 （详见枚举错误）
       */
+    //  设置可以暂停的管理员地址地址
     function _setPauseGuardian(address newPauseGuardian) public returns (uint) {
         if (msg.sender != admin) {
             return fail(Error.UNAUTHORIZED, FailureInfo.SET_PAUSE_GUARDIAN_OWNER_CHECK);
@@ -1216,19 +1228,24 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
 
     /*** Comp Distribution ***/
     /*** 奖励分配 */
-   /**
+    /**
       * @notice 为单个市场设置 COMP 速度
       * @param cToken COMP 更新速度的市场
       * @param compSpeed 市场的新 COMP 速度
       */
     function setCompSpeedInternal(CToken cToken, uint compSpeed) internal {
         uint currentCompSpeed = compSpeeds[address(cToken)];
+        // currentCompSpeed == 0,说明没有设置速率。
         if (currentCompSpeed != 0) {
             // note that COMP speed could be set to 0 to halt liquidity rewards for a market
+            // 获取当前cToken指数
             Exp memory borrowIndex = Exp({mantissa: cToken.borrowIndex()});
+            // 更新指数
             updateCompSupplyIndex(address(cToken));
             updateCompBorrowIndex(address(cToken), borrowIndex);
-        } else if (compSpeed != 0) {
+        } 
+        // 要设置新的速率 != 0
+        else if (compSpeed != 0) {
             // Add the COMP market
             Market storage market = markets[address(cToken)];
             require(market.isListed == true, "comp market is not listed");
@@ -1247,7 +1264,7 @@ contract ComptrollerG7 is ComptrollerV5Storage, ComptrollerInterface, Comptrolle
                 });
             }
         }
-
+        // 之前存储的速率和新速率不相等的时候重新设置速率
         if (currentCompSpeed != compSpeed) {
             compSpeeds[address(cToken)] = compSpeed;
             emit CompSpeedUpdated(cToken, compSpeed);

@@ -1,7 +1,7 @@
 import { createContracts } from "../contracts";
 import { formatUnits, parseEther, parseUnits } from "ethers/lib/utils";
 import { ethers } from "hardhat";
-import { color } from "./infomaction";
+import { color } from "../infomaction";
 
 // 自己给别人还钱 USDT
 /**
