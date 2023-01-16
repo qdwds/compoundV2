@@ -71,3 +71,10 @@ export const comptroller__setCollateralFactor = async(comptrollerAddress:string,
     await comptroller._setCollateralFactor(cErc20DelegatorAddress,parseEther("0.75"));    
     console.log("comptroller__setCollateralFactor call success !!")
 }
+
+// 设置comp token 地址
+
+export const comptroller_setCompAddress = async (comptrollerAddress:string, comp:string) => {
+    const comptroller = await ethers.getContractAt(comptrollerName,comptrollerAddress);
+    await comptroller.setCompAddress(comp);
+}

@@ -82,6 +82,8 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
     // No collateralFactorMantissa may exceed this value
     uint internal constant collateralFactorMaxMantissa = 0.9e18; // 0.9
 
+    // comp address 
+    address public comAddress;
     constructor() public {
         admin = msg.sender;
     }
@@ -239,7 +241,7 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
         // Shh - currently unused
         minter;
         mintAmount;
-        console.log(!markets[cToken].isListed);
+        // console.log(!markets[cToken].isListed);
         if (!markets[cToken].isListed) {
             return uint(Error.MARKET_NOT_LISTED);
         }
@@ -344,7 +346,7 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
     function borrowAllowed(address cToken, address borrower, uint borrowAmount) external returns (uint) {
         // Pausing is a very serious situation - we revert to sound the alarms
         require(!borrowGuardianPaused[cToken], "borrow is paused");
-        console.log("!markets[cToken].isListed");
+        // console.log("!markets[cToken].isListed");
         if (!markets[cToken].isListed) {
             return uint(Error.MARKET_NOT_LISTED);
         }
@@ -507,7 +509,7 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
             if (err != Error.NO_ERROR) {
                 return uint(err);
             }
-            console.log("是否允许清算流动性：",shortfall);
+            // console.log("是否允许清算流动性：",shortfall);
             // 流动性不足   判断是允许清算。只要  != 0 就是允许清算的。
             if (shortfall == 0) {
                 console.log("流动性不足，不能清算!");
@@ -518,7 +520,7 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
             // 清算人不得偿还超过 closeFactor 允许的数额 50%
             uint maxClose = mul_ScalarTruncate(Exp({mantissa: closeFactorMantissa}), borrowBalance);
             // 清算额度超过计算额度  返回错误
-            console.log(repayAmount,maxClose);
+            // console.log(repayAmount,maxClose);
             if (repayAmount > maxClose) {
                 return uint(Error.TOO_MUCH_REPAY);
             }
@@ -761,7 +763,7 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
         
         for (uint i = 0; i < assets.length; i++) {
             CToken asset = assets[i];
-            console.log("asset",address(asset));
+            // console.log("asset",address(asset));
             // Read the balances and exchange rate from the cToken
 
             // 获取当前用户中的cToken中的信息
@@ -790,11 +792,11 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
             // 从代币 -> 以太币（标准化价格值）预先计算一个转换因子
             // 单个货币价值？ =（资产抵押率 * 汇率） * 价格
             vars.tokensToDenom = mul_(mul_(vars.collateralFactor, vars.exchangeRate), vars.oraclePrice);
-            console.log("vars.sumCollateral 总抵押品",vars.sumCollateral);
+            // console.log("vars.sumCollateral 总抵押品",vars.sumCollateral);
             // sumCollateral += tokensToDenom * cTokenBalance
             // 单个货币价值 * cToken额度 + 总抵押品 = 总抵押品
             vars.sumCollateral = mul_ScalarTruncateAddUInt(vars.tokensToDenom, vars.cTokenBalance, vars.sumCollateral);
-            console.log("vars.sumCollateral 总抵押品",vars.sumCollateral);
+            // console.log("vars.sumCollateral 总抵押品",vars.sumCollateral);
 
             // sumBorrowPlusEffects += oraclePrice * borrowBalance
             // 借款额度 = 价格 * 借款数量
@@ -817,10 +819,10 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
         // liquidity 剩余的可借额度 (总抵押 - 总债务)
         // shortfall 可以清算  (总债务 - 总抵押)
         if (vars.sumCollateral > vars.sumBorrowPlusEffects) {
-            console.log("vars.sumCollateral - vars.sumBorrowPlusEffects",vars.sumCollateral - vars.sumBorrowPlusEffects);
+            // console.log("vars.sumCollateral - vars.sumBorrowPlusEffects",vars.sumCollateral - vars.sumBorrowPlusEffects);
             return (Error.NO_ERROR, vars.sumCollateral - vars.sumBorrowPlusEffects, 0);
         } else {
-            console.log("vars.sumBorrowPlusEffects - vars.sumCollateral", vars.sumBorrowPlusEffects - vars.sumCollateral);
+            // console.log("vars.sumBorrowPlusEffects - vars.sumCollateral", vars.sumBorrowPlusEffects - vars.sumCollateral);
             return (Error.NO_ERROR, 0, vars.sumBorrowPlusEffects - vars.sumCollateral);
         }
     }
@@ -1168,12 +1170,17 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
       * @param supplySpeed 新的供应方 COMP 市场速度
       * @param borrowSpeed 市场的新借方 COMP 速度
       */
-    // 设置存款/借款 两个挖款速率（每个区块）
-    function setCompSpeedInternal(CToken cToken, uint supplySpeed, uint borrowSpeed) internal {
+    // 设置存款/借款 两个挖款速率（每个区块） wei
+    function setCompSpeedInternal(
+        CToken cToken, 
+        uint supplySpeed, 
+        uint borrowSpeed
+    ) internal {
         // 检查是否上市。
         Market storage market = markets[address(cToken)];
         require(market.isListed, "comp market is not listed");
-        //  设置存款挖款速率
+        //  存款挖款速率
+        // 1 != 2
         if (compSupplySpeeds[address(cToken)] != supplySpeed) {
             // 供应速度已更新所以让我们更新供应状态以确保
             // 1. COMP 为旧速度正确累积，并且
@@ -1263,7 +1270,7 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
       * @param supplier 将 COMP 分配给的供应商的地址
       */
     //  分发当前用户此前未结算的存款产出的 COMP
-    // 计算存款 当前未产出的COPM，只是更新当前用户的COMP数量，并未发送给用户
+    // 计算存款 当前未产出的COMP，只是更新当前用户的COMP数量，并未发送给用户
     function distributeSupplierComp(address cToken, address supplier) internal {
         // TODO：如果用户不在供应商市场，则不要分发供应商 COMP。
          // 由于在许多地方调用了 distributeSupplierComp，因此此检查应尽可能节省 gas。
@@ -1272,7 +1279,7 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
         CompMarketState storage supplyState = compSupplyState[cToken];
         // 使用率
         uint supplyIndex = supplyState.index;
-        // 借贷指数
+        // 存款指数
         uint supplierIndex = compSupplierIndex[cToken][supplier];
 
         // 将供应商的索引更新为当前索引，因为我们正在分配应计 COMP
@@ -1297,7 +1304,7 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
         uint supplierDelta = mul_(supplierTokens, deltaIndex);
         // 当前用户所得comp 数量 = 未体现的 + 用户贡献数量
         uint supplierAccrued = add_(compAccrued[supplier], supplierDelta);
-        // 更新用户未体现的COPM 数量
+        // 更新用户未体现的COMP 数量
         compAccrued[supplier] = supplierAccrued;
 
         emit DistributedSupplierComp(CToken(cToken), supplier, supplierDelta, supplyIndex);
@@ -1309,7 +1316,7 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
       * @param cToken 借款人正在互动的市场
       * @param borrower 将 COMP 分配给借款人的地址
       */
-     // 计算借款 当前未产出的COPM。只是更新当前用户的COMP数量，并未发送给用户
+     // 计算借款 当前未产出的COMP。只是更新当前用户的COMP数量，并未发送给用户
     function distributeBorrowerComp(address cToken, address borrower, Exp memory marketBorrowIndex) internal {
         // TODO：如果用户不在借款人市场，则不要分发供应商 COMP。
         // 由于在许多地方调用了 distributeBorrowerComp，此检查应尽可能高效。
@@ -1373,6 +1380,9 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
       * @param holder 申领 COMP 的地址
       */
     //  领取所有市场 所得到的COMP
+    function getComp(address holder) public {
+        return claimComp(holder, allMarkets);
+    }
     function claimComp(address holder) public {
         return claimComp(holder, allMarkets);
     }
@@ -1411,7 +1421,7 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
                 // 更新当前用户借款COMP奖励
                 updateCompBorrowIndex(address(cToken), borrowIndex);
                 for (uint j = 0; j < holders.length; j++) {
-                    // 获取借款未产出区块 奖励的COPM
+                    // 获取借款未产出区块 奖励的COMP
                     distributeBorrowerComp(address(cToken), holders[j], borrowIndex);
                 }
             }
@@ -1419,7 +1429,7 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
                 // 更新当前用户存款COMP奖励
                 updateCompSupplyIndex(address(cToken));
                 for (uint j = 0; j < holders.length; j++) {
-                    // 获取存款未产出区块 奖励的COPM
+                    // 获取存款未产出区块 奖励的COMP
                     distributeSupplierComp(address(cToken), holders[j]);
                 }
             }
@@ -1427,6 +1437,7 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
         for (uint j = 0; j < holders.length; j++) {
             // 将未获取的COMP全部发送给调用者
             compAccrued[holders[j]] = grantCompInternal(holders[j], compAccrued[holders[j]]);
+            console.log(compAccrued[holders[j]]);
         }
     }
 
@@ -1440,32 +1451,33 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
     //  将所有市场中的COMP发送给用户
     function grantCompInternal(address user, uint amount) internal returns (uint) {
         // 循环所有市场
-        for (uint i = 0; i < allMarkets.length; ++i) {
-            address market = address(allMarkets[i]);
-            // 返回 每个区块产生COMP的借款速度
-            bool noOriginalSpeed = compBorrowSpeeds[market] == 0;
-            // 返回 供应商存款指数
-            bool invalidSupply = noOriginalSpeed && compSupplierIndex[market][user] > 0;
-            // 返回 供应商借款指数
-            bool invalidBorrow = noOriginalSpeed && compBorrowerIndex[market][user] > 0;
-
-            // 如果有一个存在那么久返回对应输入的值。
-            if (invalidSupply || invalidBorrow) {
-                // console.log("amount",amount);
-                return amount;
-            }
-        }
-        // 获取COPM简历的地址
-        Comp comp = Comp(getCompAddress());
+        // for (uint i = 0; i < allMarkets.length; ++i) {
+        //     address market = address(allMarkets[i]);
+        //     // 返回 每个区块产生COMP的借款速度
+        //     bool noOriginalSpeed = compBorrowSpeeds[market] == 0;
+        //     // 返回 供应商存款指数
+        //     bool invalidSupply = noOriginalSpeed && compSupplierIndex[market][user] > 0;
+        //     // 返回 供应商借款指数
+        //     bool invalidBorrow = noOriginalSpeed && compBorrowerIndex[market][user] > 0;
+        //     console.log(noOriginalSpeed,invalidSupply,invalidBorrow,amount);
+        //     // 如果有一个存在那么久返回对应输入的值。
+        //     if (invalidSupply || invalidBorrow) {
+        //         // console.log("amount",amount);
+        //         return amount;
+        //     }
+        // }
+        // 获取COMP奖励的地址
+        Comp comp = Comp(comAddress);
         // 查询当前合约的COMP余额
         uint compRemaining = comp.balanceOf(address(this));
-        
         // 输入有值，输入的值 要小于当前合约的余额
+            console.log(amount,compRemaining,address(comp),address(this) );
         if (amount > 0 && amount <= compRemaining) {
             // 给调用者转帐
             comp.transfer(user, amount);
             return 0;
         }
+        // console.log(amount);
         // 返回发送的额度
         return amount;
     }
@@ -1478,7 +1490,7 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
       * @param recipient 将 COMP 转入的收件人地址
       * @param amount 要（可能）转移的 COMP 数量
       */
-    //  转移移
+    //  将comp转移给接收者
     function _grantComp(address recipient, uint amount) public {
         require(adminOrInitializing(), "only admin can grant comp");
         uint amountLeft = grantCompInternal(recipient, amount);
@@ -1492,13 +1504,13 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
       * @param supplySpeeds 相应市场的存款 COMP 速度。
       * @param borrowSpeeds 相应市场的借款 COMP 速度。
       */
-    //  设置挖款COPM供应速率
+    //  设置挖款COMP供应速率
     // 开启挖矿奖励
     // 速率是 每个区块的COMP（单位：wei）
     function _setCompSpeeds(
         CToken[] memory cTokens,    //  开启挖款奖励的cToken
-        uint[] memory supplySpeeds,     //  存款 挖款速率
-        uint[] memory borrowSpeeds      //  借款 挖款速率
+        uint[] memory supplySpeeds,     //  存款 挖款速率 单位wei
+        uint[] memory borrowSpeeds      //  借款 挖款速率 单位wei
     ) public {
         require(adminOrInitializing(), "only admin can set comp speed");
 
@@ -1545,6 +1557,18 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
         return allMarkets;
     }
 
+    // 手动更新存款未提COMP
+    function updateCompSupply(address cToken,address account) public {
+        updateCompSupplyIndex(cToken);
+        distributeSupplierComp(cToken, account);
+    }
+    // 手动更新借款未提COMP
+    function updateCompBorrow(address cToken,address account) public {
+        Exp memory borrowIndex = Exp({mantissa: CToken(cToken).borrowIndex()});
+        updateCompBorrowIndex(cToken, borrowIndex);
+        distributeBorrowerComp(cToken, account, borrowIndex);
+    }
+    
     /**
       * @notice 如果给定的 cToken 市场已被弃用，则返回 true
       * @dev 已弃用的 cToken 市场中的所有借款都可以立即清算
@@ -1568,6 +1592,10 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
      * @return The address of COMP
      */
     function getCompAddress() public view returns (address) {
-        return /**start*/0x81F82957608f74441E085851cA5Cc091b23d17A2/**end*/;
+        return comAddress;
+        // return /**start*/0x5FbDB2315678afecb367f032d93F642f64180aa3/**end*/;
+    }
+    function setCompAddress(address _compAddress) external {
+        comAddress = _compAddress;
     }
 }

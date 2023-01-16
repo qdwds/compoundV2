@@ -4,7 +4,7 @@ import { ethers } from "hardhat";
 import { join, resolve } from "path";
 import { cEtherDeploy, cEther__setReserveFactor, cEther__supportMarket } from "./CEther.module";
 import { compTokenDeploy, setCompAddress } from "./comp.module";
-import { unitollerDeploy, comptrollerDeploy, unitoller__setPendingImplementation, ccomptroller__setLiquidationIncentive, comptroller__become, comptroller__setCloseFactor, comptroller__setPriceOracle, comptroller__setCollateralFactor } from "./comptroller.module";
+import { unitollerDeploy, comptrollerDeploy, unitoller__setPendingImplementation, ccomptroller__setLiquidationIncentive, comptroller__become, comptroller__setCloseFactor, comptroller__setPriceOracle, comptroller__setCollateralFactor, comptroller_setCompAddress } from "./comptroller.module";
 import { erc20TokenDeploy, CErc20DelegateDeploy, cErc20DelegatorDeploy, cToken__setReserveFactor, cErc20Delegator_supportMarket } from "./cToken.module";
 import { jumpRateModelV2Deploy } from "./interestRate.module";
 import { simplePriceOracleDeploy, simplePriceOracle_setUnderlyingPrice } from "./priceOracle.module";
@@ -16,12 +16,14 @@ async function main() {
 
   // Comp token 合约
   const comp = await compTokenDeploy();
-
-  await setCompAddress(comp.address); //  set comp token address 
+  //  set comp token address 
+  // await setCompAddress(comp.address);
   // 代理合约
   const unitoller = await unitollerDeploy();
   //  控制合约
   const comptroller = await comptrollerDeploy();
+  // 设置奖励comp token地址
+  await comptroller_setCompAddress(comptroller.address, comp.address);
   // 预言机
   const simplePriceOracle = await simplePriceOracleDeploy();
 

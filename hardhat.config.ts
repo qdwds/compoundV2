@@ -9,6 +9,10 @@ const config: HardhatUserConfig = {
 	networks: {
 		localhost: {
 			from: "http://127.0.0.1:8545/",
+				// mining: {	//	开启自动挖矿
+				//   auto: false,
+				//   interval: [500, 1000],	//	0.5s - 1s 随机时间创建区块
+				// }
 			// accounts:[process.env.GRANACHE_PRIVATE_KEY!]
 		},
 		oke:{
