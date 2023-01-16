@@ -297,7 +297,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     * @notice 返回此cToken的当前每块供应利率 ? 供应利率？？
     */
     // * @return 每个区块的供应利率，按1e18缩放
-    //  每个区块的供应利率
+    //  每个区块的存款利率
     function supplyRatePerBlock() external view returns (uint) {
         // 调用传入利率模型合约的方法计算 还款利率 总借入  总储备量 市场储备资金
         // console.log("reserveFactorMantissa", reserveFactorMantissa);
@@ -1489,7 +1489,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
        * @dev 管理函数来产生利息并设置一个新的储备因子
        * @return uint 0=成功，否则失败（详见ErrorReporter.sol）
        */
-    //  设置保证金系数
+    //  设置储备金系数
     function _setReserveFactor(uint newReserveFactorMantissa) external nonReentrant returns (uint) {
         // 计算累积利率
         uint error = accrueInterest();

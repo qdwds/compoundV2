@@ -19,7 +19,10 @@ export const createContracts = async (): Promise<any> => {
     const oracle = await ethers.getContractAt("SimplePriceOracle", address.simplePriceOracle, signer);
     const cEther = await ethers.getContractAt("SimplePriceOracle", address.cEther, signer);
     const comp = await ethers.getContractAt("Comp", address.comp, signer);
-    
+    const cUSDT = await ethers.getContractAt("CErc20Delegator", address.cUSDT, signer);
+    const cDAI = await ethers.getContractAt("CErc20Delegator", address.cDAI, signer);
+    const usdt = await ethers.getContractAt("USDTToken",address.usdt, signer);
+    const dai = await ethers.getContractAt("DAIToken",address.dai, signer);
     return {
         signer,
         comptroller,
@@ -31,5 +34,9 @@ export const createContracts = async (): Promise<any> => {
         accountCToken,
         accountERC20,
         comp,
+        usdt,
+        cUSDT,
+        dai,
+        cDAI,
     }
 }

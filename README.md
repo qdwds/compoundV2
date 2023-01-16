@@ -45,8 +45,19 @@ mint函数是把指定的token根据当前token的价格存入compound中，然�
 清算人可以使用任意资产抵押清算
 
 
-借款函数，首先需要先执行mint函数。借款比例在
+？？？？？？
+疑问 使用率 是说到借款使用率还是存款使用率？？？？？？？？？？？？？？
+如何 获取当前的借款 存款 指数 呢？？？？
+储备金率
+
+
+
+
+
 # 利率计算
+拐点型和直线型中的：存款列率模型是一致的
+## 直线型
+## 拐点型
 [!https://img-blog.csdnimg.cn/d20cf9ce45604a858e749a3a9c05e267.webp?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBAd29uZGVyQmxvY2s=,size_20,color_FFFFFF,t_70,g_se,x_16]
 [!https://img-blog.csdnimg.cn/9dba9baeb5d94ec68a67a8e7b0ac0806.webp?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBAd29uZGVyQmxvY2s=,size_20,color_FFFFFF,t_70,g_se,x_16]
 存款利率计算
@@ -63,15 +74,20 @@ mint函数是把指定的token根据当前token的价格存入compound中，然�
 ## 设置市场
 代码部署设置市场应该使用`comptroller`的地址，而不是使用代理合约`unitoller`的地址。之前由于错误使用，导致在设置代币加入市场后，明明已经加入市场查找时候能找到，调用无法调用
 
-# 借款还款额度计算
-
-
-# 
-清算比例
-# 抵押率
-根据用户的存款额度，最多可以抵押当前存款资产的75%(compound)资产借出使用。 
-## 借款利率
+# 概念
+以下概念部分摘自[Keegan小钢 文章](https://learnblockchain.cn/article/2593#%E5%88%A9%E7%8E%87%E6%A8%A1%E5%9E%8B)并作出一部分简化修改。
 ## 清算激励
 清算人的清算奖励机制。清算人清算借款人后可以得到的建立1.08(compound)，该奖励是由借款人支出。
-## 指数=  资金使用率
-
+## 抵押率
+根据用户的存款额度，最多可以抵押当前存款资产的75%(compound)资产借出使用。
+## 标的资产（Underlying Token）
+即借贷资产，比如 ETH、USDT、USDC、WBTC等原始资产。
+## cToken
+用户在 Compound 上存入资产的凭证,每一种标的资产都有对应的一种 cToken。每种token兑换cToken部署时候都能设置token <=> cToken对换比例。
+比如：ETH 对应 cETH，USDT 对应 cUSDT，当用户向 Compound 存入 USDT 则会得到对应比例的cUSDT。取款时就可以用 cUSDT 换回对应比例的USDT标的资产。
+## 兑换率（Exchange Rate）
+cToken 与标的资产的兑换比例，比如 cETH 的兑换率为 0.02，即 1 个 cETH 可以兑换 0.02 个 ETH。兑换率会随着时间推移不断上涨，因此，持有 cToken 就等于不断生息，所以也才叫生息代币。计算公式为：exchangeRate = (totalCash + totalBorrows - totalReserves) / totalSupply
+## 抵押因子（Collateral Factor）
+每种标的资产都有一个抵押因子，代表用户抵押的资产价值对应可得到的借款的比率，即用来衡量可借额度的。取值范围 0-1，当为 0 时，表示该类资产不能作为抵押品去借贷其他资产。一般最高设为 0.75，比如 ETH，假如用户存入了 0.1 个 ETH 并开启作为抵押品，当时的 ETH 价值为 2000 美元，则可借额度为 0.1 * 2000 * 0.75 = 150 美元，可最多借出价值 150 美元的其他资产。
+## 储备金系数(Reserve Factor）
+即协议抽取借款人支付的利息的百分比，这根据资产的不同而决定 (Compound协议中，不同资产有着不同的储备金系数)

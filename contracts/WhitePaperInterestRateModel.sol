@@ -20,29 +20,35 @@ contract WhitePaperInterestRateModel is InterestRateModel {
     event NewInterestParams(uint baseRatePerBlock, uint multiplierPerBlock);
 
     /**
-     * @notice The approximate number of blocks per year that is assumed by the interest rate model
-     */
+      * @notice 利率模型假设的每年大约块数
+      */
     uint public constant blocksPerYear = 2102400;
 
     /**
-     * @notice The multiplier of utilization rate that gives the slope of the interest rate
-     */
+      * @notice 给出利率斜率的利用率乘数
+      */
     uint public multiplierPerBlock;
 
     /**
-     * @notice The base interest rate which is the y-intercept when utilization rate is 0
-     */
+      * @notice 基准利率，即利用率为0时的y轴截距
+      */
     uint public baseRatePerBlock;
 
     /**
       * @notice 构建利率模型
-      * @param baseRatePerYear 近似目标基础 APR，尾数（按 1e18 缩放）
-      * @param multiplierPerYear 利率利用率的增长率（按 1e18 缩放）
+      * @param baseRatePerYear 近似目标基础 APR，尾数（按 1e18 缩放） // 年化利率
+      * @param multiplierPerYear 利率利用率的增长率（按 1e18 缩放） // 年利率乘数
       */
-    constructor(uint baseRatePerYear, uint multiplierPerYear) public {
+    constructor(
+        uint baseRatePerYear, 
+        uint multiplierPerYear
+    ) public {
+        // 块基准利率 = 年基准利率 / 年块数
+        // 把基准年化利率 / 预计一年产生的快 == 每个区块产生多少年化利率
         baseRatePerBlock = baseRatePerYear.div(blocksPerYear);
+        // 块利率乘数 = 年利率乘数 / 年块数
+        // 年利率乘数 / 年块书 == 每块的乘数
         multiplierPerBlock = multiplierPerYear.div(blocksPerYear);
-
         emit NewInterestParams(baseRatePerBlock, multiplierPerBlock);
     }
 
@@ -54,14 +60,18 @@ contract WhitePaperInterestRateModel is InterestRateModel {
       */
 	//  资金使用率
     //   * @return 使用率作为尾数在 [0, 1e18] 之间
-    function utilizationRate(uint cash, uint borrows, uint reserves) public pure returns (uint) {
+    function utilizationRate(
+        uint cash,  //  代币余额
+        uint borrows,   //  用户借出代币总数
+        uint reserves   //  储备代币数量
+    ) public pure returns (uint) {
         // Utilization rate is 0 when there are no borrows
         if (borrows == 0) {
             return 0;
         }
 
         // 资金使用率 = 总借款 / (资金池余额 + 总借款 - 储备金)
-        // utilizationRate = borrows / (cash + borrows - reserves)
+        // borrows * 1e18 / (cash + borrows - reserves)
         return borrows.mul(1e18).div(cash.add(borrows).sub(reserves));
     }
 
@@ -73,12 +83,18 @@ contract WhitePaperInterestRateModel is InterestRateModel {
       */
 	//  借款利率
     //   * @return 以尾数表示的每个区块的借款利率百分比（按 1e18 缩放）
-    function getBorrowRate(uint cash, uint borrows, uint reserves) public view returns (uint) {
+    function getBorrowRate(
+        uint cash, 
+        uint borrows, 
+        uint reserves
+    ) public view returns (uint) {
+        // 获取资金使用率
         uint ur = utilizationRate(cash, borrows, reserves);
 		// 借款利率 = 使用率 * 区块斜率 + 基准利率
 		// borrowRate = utilizationRate * multiplier + baseRate 
 		// 借款年利率 = 5% + (12% x 62.13%) = 12.4556%
         // 传入的是1e18 所以需要 / 1e18
+        // ur * multiplierPerBlock / 1e18 + baseRatePerBlock
         return ur.mul(multiplierPerBlock).div(1e18).add(baseRatePerBlock);
     }
 
@@ -91,11 +107,19 @@ contract WhitePaperInterestRateModel is InterestRateModel {
       */
 	//  存款利率
     //   * @return 每个块的供应率百分比作为尾数（按 1e18 缩放）
-    function getSupplyRate(uint cash, uint borrows, uint reserves, uint reserveFactorMantissa) public view returns (uint) {
+    function getSupplyRate(
+        uint cash, 
+        uint borrows, 
+        uint reserves, 
+        uint reserveFactorMantissa
+    ) public view returns (uint) {
+        // 1 - 储备金率(扩大的精度)
         uint oneMinusReserveFactor = uint(1e18).sub(reserveFactorMantissa);
+        // 获取借款利率
         uint borrowRate = getBorrowRate(cash, borrows, reserves);
+        // 借款利率 * 储备金 - 1e18(减去扩大的精度)
         uint rateToPool = borrowRate.mul(oneMinusReserveFactor).div(1e18);
-		// 存款利率 = 资金使用率 * 借款利率 *（1 - 储备金率）
+		// 块质押利率(存款) = 资金使用率 * 借款利率 *（1 - 储备金率）
 		// supplyRate = utilizationRate * borrowRate * (1 - reserveFactor)
         return utilizationRate(cash, borrows, reserves).mul(rateToPool).div(1e18);
     }

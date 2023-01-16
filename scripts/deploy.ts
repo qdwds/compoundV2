@@ -6,9 +6,9 @@ import { cEtherDeploy, cEther__setReserveFactor, cEther__supportMarket } from ".
 import { compTokenDeploy, setCompAddress } from "./comp.module";
 import { unitollerDeploy, comptrollerDeploy, unitoller__setPendingImplementation, ccomptroller__setLiquidationIncentive, comptroller__become, comptroller__setCloseFactor, comptroller__setPriceOracle, comptroller__setCollateralFactor, comptroller_setCompAddress } from "./comptroller.module";
 import { erc20TokenDeploy, CErc20DelegateDeploy, cErc20DelegatorDeploy, cToken__setReserveFactor, cErc20Delegator_supportMarket } from "./cToken.module";
-import { jumpRateModelV2Deploy } from "./interestRate.module";
+import { jumpRateModelV2Deploy, WhitePaperInterestRateModelDeploy } from "./interestRate.module";
 import { simplePriceOracleDeploy, simplePriceOracle_setUnderlyingPrice } from "./priceOracle.module";
-import { USDTTokenDeploy } from "./tokens.module";
+import { DAITokenDeploy, USDTTokenDeploy } from "./tokens.module";
 
 async function main() {
   const signer = await ethers.provider.getSigner();
@@ -42,9 +42,9 @@ async function main() {
   // 设置预言机
   await comptroller__setPriceOracle(comptroller.address, simplePriceOracle.address)
 
-  // 拐点型利率模型 ctoken = toekn。 eth = eth
-  const cTokenJumpRateModelV2 = await jumpRateModelV2Deploy(owner);
-  const etherJumpRateModelV2 = await jumpRateModelV2Deploy(owner);
+  // 利率模型
+  const jumpRateModelV2 = await jumpRateModelV2Deploy(owner);
+  const whitePaperInterestRateModel = await WhitePaperInterestRateModelDeploy(owner);
 
 
   // usdt => cUsdt
@@ -58,13 +58,15 @@ async function main() {
   const cErc20Delegator = await cErc20DelegatorDeploy(
     erc20Token.address, 
     comptroller.address, 
-    cTokenJumpRateModelV2.address, 
+    jumpRateModelV2.address, 
     owner, 
-    cErc20Delegate.address
+    cErc20Delegate.address,
+    "COMP USD",
+    "cUSDT"
   )
   const cEther = await cEtherDeploy(
     comptroller.address, 
-    etherJumpRateModelV2.address, 
+    jumpRateModelV2.address, 
     owner
   );
 
@@ -86,8 +88,7 @@ async function main() {
     cErc20Delegator.address, 
     parseEther("1")
   );
-  // await simplePriceOracle_setUnderlyingPrice(simplePriceOracle.address, erc20Token.address, parseEther("1"))
-  // eth 有自己的设置价格吗？为啥报错？
+  // cEther 价格
   await simplePriceOracle_setUnderlyingPrice(
     signer,
     simplePriceOracle.address, 
@@ -95,7 +96,7 @@ async function main() {
     parseEther("2000")
   );
 
-  // 设置保证金系数
+  // 设置储备金系数
   await cToken__setReserveFactor(cErc20Delegator.address);
   await cEther__setReserveFactor(cEther.address);
 
@@ -107,22 +108,37 @@ async function main() {
   );
 
 
-  // tokens
+  // 利率模型使用的token
+  // 直线型
   const usdt = await USDTTokenDeploy();
-
+  const cUSDT = await cErc20DelegatorDeploy(usdt.address, comptroller.address, whitePaperInterestRateModel.address, owner, cErc20Delegate.address,"COMP USDT","cUSDT")
+  await cErc20Delegator_supportMarket(comptroller.address, cUSDT.address);
+  await simplePriceOracle_setUnderlyingPrice(signer,simplePriceOracle.address, cUSDT.address, parseEther("1"));
+  await cToken__setReserveFactor(cUSDT.address);
+  await comptroller__setCollateralFactor(comptroller.address, cUSDT.address)
+  //  拐点型
+  const dai = await DAITokenDeploy();
+  const cDAI = await cErc20DelegatorDeploy(dai.address, comptroller.address, jumpRateModelV2.address, owner, cErc20Delegate.address,"COMP DAI","cDAI")
+  await cErc20Delegator_supportMarket(comptroller.address, cDAI.address);
+  await simplePriceOracle_setUnderlyingPrice(signer,simplePriceOracle.address, cDAI.address, parseEther("1"));
+  await cToken__setReserveFactor(cDAI.address);
+  await comptroller__setCollateralFactor(comptroller.address, cDAI.address);
+  
   const info = {
     comp: comp.address,
     unitoller: unitoller.address,
     comptroller: comptroller.address,
     simplePriceOracle: simplePriceOracle.address,
-    etherJumpRateModelV2: etherJumpRateModelV2.address,
-    cTokenJumpRateModelV2: cTokenJumpRateModelV2.address,
+    whitePaperInterestRateModel:whitePaperInterestRateModel.address,
+    jumpRateModelV2: jumpRateModelV2.address,
     erc20Token: erc20Token.address,
     cErc20Delegate: cErc20Delegate.address,
     cErc20Delegator: cErc20Delegator.address,
     cEther: cEther.address,
-    usdt: usdt.address
-
+    usdt:usdt.address,
+    cUSDT: cUSDT.address,
+    dai:dai.address,
+    cDAI: cDAI.address,
   }
 
   const infoPath = resolve(join(__dirname, "../abi/address.json"));

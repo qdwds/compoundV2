@@ -30,7 +30,9 @@ export const cErc20DelegatorDeploy =async (
     comptrollerAddress:string,
     jumpRateModelV2Address:string,
     owner:string,
-    cErc20DelegateAddress:string
+    cErc20DelegateAddress:string,
+    name:string,
+    symbol:string
 ) => {
     const CErc20Delegator = await ethers.getContractFactory(CErc20DelegatorName);
     const cErc20Delegator = await CErc20Delegator.deploy(
@@ -38,8 +40,8 @@ export const cErc20DelegatorDeploy =async (
         comptrollerAddress, //  comptroller address
         jumpRateModelV2Address, //  jumpRateModelV2 address
         parseEther("0.1"),  // 1个token 可以还  1 / 0.1(10)个cToken
-        "COPM USD", //  name
-        "cUSD",     //  symbol
+        name, //  name
+        symbol,     //  symbol
         "18",       //  decimals
         owner,      // msg.sender
         cErc20DelegateAddress,  //  cErc20Delegate address  
@@ -71,9 +73,9 @@ export const cToken__setReserveFactor = async(CErc20DelegatorAddress:string)=>{
  * @param comptrollerAddress 
  * @param cErc20DelegatorAddress 
  */
-export const cErc20Delegator_supportMarket = async (comptrollerAddress:string, cErc20DelegatorAddress:string) => {
+export const cErc20Delegator_supportMarket = async (comptrollerAddress:string, address:string) => {
     const cToken = await ethers.getContractAt("Comptroller",comptrollerAddress);
-    await cToken._supportMarket(cErc20DelegatorAddress);  //  把该token加入到市场中
+    await cToken._supportMarket(address);  //  把该token加入到市场中
     console.log("cErc20Delegator_supportMarket call success !!")
 }
 
