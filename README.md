@@ -118,33 +118,33 @@ cToken 与标的资产的兑换比例，比如 cETH 的兑换率为 0.02，即 1
 以下部分摘自[Compound完全解析-利率模型篇](https://www.wesz.com/qukuailian/2568.html)，并作出部分修改。
 ## 兑换率
 ```
-    兑换率 = 未被借走的 + 未还总量(含利息) - 储备金 / 总量
-    exchangeRate = (totalCash + totalBorrows - totalReserves) / totalSupply
+兑换率 = 未被借走的 + 未还总量(含利息) - 储备金 / 总量
+exchangeRate = (totalCash + totalBorrows - totalReserves) / totalSupply
 ```
 ## 存款年利率
 以Compound DAI为例，基础利率(年化利率)= 5%，加给利率(年化利率乘基)= 12%，若以目前当下的使用率= 62.13%来计算：
 借款年利率 = 5% + (12% x 0.6213) = 12.4556%
 也就是上图所显示的12.46% 的由来，也就是说，借款人所需要支付利息的年利率，在这个当下是12.46%。
 ```
-    块质押利率(存款) = 资金使用率 * 借款利率 *（1 - 储备金率）
-    supplyRate = utilizationRate * borrowRate * (1 - reserveFactor)
+块质押利率(存款) = 资金使用率 * 借款利率 *（1 - 储备金率）
+supplyRate = utilizationRate * borrowRate * (1 - reserveFactor)
 ```
 ## 借款年利率
 ```
-    块质押利率(存款) = 资金使用率 * 借款利率 *（1 - 储备金率）
-    supplyRate = utilizationRate * borrowRate * (1 - reserveFactor)
+块质押利率(存款) = 资金使用率 * 借款利率 *（1 - 储备金率）
+supplyRate = utilizationRate * borrowRate * (1 - reserveFactor)
 ```
 ## 使用率
 ```
-    totalBorrows / (totalCasg + totalBorrows)
+totalBorrows / (totalCasg + totalBorrows)
 ```
 ## 存款额度计算
 ```
-    新的存款总额 = 存款总额 +（存款总额 * 存款利率 * 时间）
+新的存款总额 = 存款总额 +（存款总额 * 存款利率 * 时间）
 ```
 ## 贷款额度
 ```
-    新的贷款总额 = 贷款总额 +（贷款总额 * 贷款利率 * 时间）
+新的贷款总额 = 贷款总额 +（贷款总额 * 贷款利率 * 时间）
 ```
 
 笔记文档：[https://www.yuque.com/qdwds](https://www.yuque.com/qdwds)
