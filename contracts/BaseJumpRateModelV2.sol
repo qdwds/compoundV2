@@ -25,7 +25,7 @@ contract BaseJumpRateModelV2 {
     address public owner;
 
     /**
-     * @notice 利率模型假设的每年的大致区块数
+     * @notice 利率模型假设的每年的大致区块数 15s = block
      */
     uint public constant blocksPerYear = 2102400;
 

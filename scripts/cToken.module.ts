@@ -25,6 +25,17 @@ export const CErc20DelegateDeploy = async () => {
     return cErc20Delegate;
 }
 
+/**
+ * 部署cToken
+ * @param erc20Address 
+ * @param comptrollerAddress 
+ * @param jumpRateModelV2Address 
+ * @param owner 
+ * @param cErc20DelegateAddress 
+ * @param name 
+ * @param symbol 
+ * @returns 
+ */
 export const cErc20DelegatorDeploy =async (
     erc20Address:string,
     comptrollerAddress:string,

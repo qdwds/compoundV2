@@ -43,7 +43,9 @@ async function main() {
   await comptroller__setPriceOracle(comptroller.address, simplePriceOracle.address)
 
   // 利率模型
+  // 拐点型利率模型
   const jumpRateModelV2 = await jumpRateModelV2Deploy(owner);
+  // 直线型利率模型
   const whitePaperInterestRateModel = await WhitePaperInterestRateModelDeploy(owner);
 
 
@@ -115,15 +117,16 @@ async function main() {
   await cErc20Delegator_supportMarket(comptroller.address, cUSDT.address);
   await simplePriceOracle_setUnderlyingPrice(signer,simplePriceOracle.address, cUSDT.address, parseEther("1"));
   await cToken__setReserveFactor(cUSDT.address);
-  await comptroller__setCollateralFactor(comptroller.address, cUSDT.address)
+  await comptroller__setCollateralFactor(comptroller.address, cUSDT.address,"0.9")
+  
   //  拐点型
   const dai = await DAITokenDeploy();
   const cDAI = await cErc20DelegatorDeploy(dai.address, comptroller.address, jumpRateModelV2.address, owner, cErc20Delegate.address,"COMP DAI","cDAI")
   await cErc20Delegator_supportMarket(comptroller.address, cDAI.address);
   await simplePriceOracle_setUnderlyingPrice(signer,simplePriceOracle.address, cDAI.address, parseEther("1"));
   await cToken__setReserveFactor(cDAI.address);
-  await comptroller__setCollateralFactor(comptroller.address, cDAI.address);
-  
+  await comptroller__setCollateralFactor(comptroller.address, cDAI.address,"0.9");
+
   const info = {
     comp: comp.address,
     unitoller: unitoller.address,

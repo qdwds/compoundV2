@@ -390,6 +390,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     * @notice 累积利息然后返回最新汇率
     */
     // * @return 按 1e18 比例计算的汇率
+    //  cToken <-> token 兑换率
     // function exchangeRateCurrent() public returns (uint) {
     function exchangeRateCurrent() public nonReentrant returns (uint) {
         // 计算累积利率 没有报错
@@ -403,6 +404,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     * @dev 这个函数在计算汇率之前不会产生利息
     外部使用 返回存储汇率
     */
+    //  cToken <-> token 兑换率
     // * @return 按 1e18 比例计算的汇率
     function exchangeRateStored() public view returns (uint) {
         (MathError err, uint result) = exchangeRateStoredInternal();
@@ -415,7 +417,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
     * @dev 这个函数在计算汇率之前不会产生利息
     */
     // * @return（错误代码，计算的汇率按 1e18 缩放）
-    //  获取存款的汇率 内部使用
+    //  cToken <-> token 兑换率
     function exchangeRateStoredInternal() internal view returns (MathError, uint) {
         // 获取流通的代币总量   质押流通总数？？？？？
         uint _totalSupply = totalSupply;
@@ -456,7 +458,7 @@ contract CToken is CTokenInterface, Exponential, TokenErrorReporter {
             if (mathErr != MathError.NO_ERROR) {
                 return (mathErr, 0);
             }
-            console.log("exchangeRate 存款汇率", exchangeRate.mantissa);
+            console.log("cToken 兑换率", exchangeRate.mantissa);
             return (MathError.NO_ERROR, exchangeRate.mantissa);
         }
     }

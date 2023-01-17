@@ -63,12 +63,12 @@ export const comptroller__setPriceOracle = async(comptrollerAddress:string, simp
 
 
 // 设置抵押率
-export const comptroller__setCollateralFactor = async(comptrollerAddress:string,cErc20DelegatorAddress:string) => {
+export const comptroller__setCollateralFactor = async(comptrollerAddress:string,cErc20DelegatorAddress:string,rate?:string) => {
     const comptroller = await ethers.getContractAt(comptrollerName,comptrollerAddress);
     // //  CToken cToken,CErc20Delegator.sol 地址
     // 0.6 * 10 ^ 18
     // 100 * 0.75 = 75usdt
-    await comptroller._setCollateralFactor(cErc20DelegatorAddress,parseEther("0.75"));    
+    await comptroller._setCollateralFactor(cErc20DelegatorAddress,parseEther(rate ? rate :"0.75"));    
     console.log("comptroller__setCollateralFactor call success !!")
 }
 

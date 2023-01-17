@@ -27,8 +27,8 @@ contract CTokenStorage {
     uint8 public decimals;
 
     /**
-     * @notice Maximum borrow rate that can ever be applied (.0005% / block)
-     */
+      * @notice 可以应用的最大借贷利率（.0005%/块）
+      */
     //  最大借款利率
     uint internal constant borrowRateMaxMantissa = 0.0005e16;
 
@@ -248,6 +248,7 @@ contract CTokenInterface is CTokenStorage {
     // 借款余额
     function borrowBalanceCurrent(address account) external returns (uint);
     function borrowBalanceStored(address account) public view returns (uint);
+    // cToken <-> Token 兑换率
     function exchangeRateCurrent() public returns (uint);
     function exchangeRateStored() public view returns (uint);
     // 市场中的基础余额

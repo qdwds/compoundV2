@@ -1,7 +1,7 @@
 import { ethers } from "hardhat";
 import { contractAbi } from "../utils/contractInfo";
 import { baseRatePerYear, jumpMultiplierPerYear, kink, multiplierPerYear } from "./config";
-import { parseEther } from "ethers/lib/utils"
+import { parseEther, parseUnits } from "ethers/lib/utils"
 
 const JumpRateModelV2Name = "JumpRateModelV2";
 const whitePaperInterestRateModelName = "WhitePaperInterestRateModel";
@@ -9,10 +9,10 @@ export const jumpRateModelV2Deploy = async (owner: string) => {
     const JumpRateModelV2 = await ethers.getContractFactory(JumpRateModelV2Name);
     // 部署后的参数可以在 updateJumpRateModel 中修改
     const jumpRateModelV2 = await JumpRateModelV2.deploy(
-        0, 
+        parseUnits("0.1"), //  年化利率, 
         parseEther("0.07"), 
         parseEther("3"), 
-        kink, 
+        parseEther("0.8"), 
         owner
     );
     await jumpRateModelV2.deployed();
@@ -25,8 +25,8 @@ export const WhitePaperInterestRateModelDeploy = async (owner: string) => {
     const WhitePaperInterestRateModel = await ethers.getContractFactory(whitePaperInterestRateModelName);
     // 部署后的参数可以在 updateJumpRateModel 中修改
     const whitePaperInterestRateModel = await WhitePaperInterestRateModel.deploy(
-        0,
-        parseEther("0.07"), 
+        parseUnits("0.1"), //  年化利率
+        parseEther("0.07"), //  年华利率乘基
     );
     await whitePaperInterestRateModel.deployed();
     await contractAbi(whitePaperInterestRateModel.address, whitePaperInterestRateModelName);

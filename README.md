@@ -1,6 +1,5 @@
 # compound
 compound一个以太坊中去中心化的货币市场。任何人都能存币和借币，就像一个银行，用户可以存币获取利息收益，或进行抵押借币。
-哈
 
 # 关键词概念
 标的资产：抵押物的原生资产。
@@ -44,28 +43,16 @@ mint函数是把指定的token根据当前token的价格存入compound中，然�
 清算额度，清算人最多只能清算借款人额度的50%。例如借款人额度为1650，清算人最多只能清算1650 / 2 = 825的额度。
 清算人可以使用任意资产抵押清算
 
-
-？？？？？？
-疑问 使用率 是说到借款使用率还是存款使用率？？？？？？？？？？？？？？
-如何 获取当前的借款 存款 指数 呢？？？？
-储备金率
-
-
-
-
-
-# 利率计算
-拐点型和直线型中的：存款列率模型是一致的
-## 直线型
-## 拐点型
-[!https://img-blog.csdnimg.cn/d20cf9ce45604a858e749a3a9c05e267.webp?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBAd29uZGVyQmxvY2s=,size_20,color_FFFFFF,t_70,g_se,x_16]
-[!https://img-blog.csdnimg.cn/9dba9baeb5d94ec68a67a8e7b0ac0806.webp?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBAd29uZGVyQmxvY2s=,size_20,color_FFFFFF,t_70,g_se,x_16]
-存款利率计算
-```存款利率 =（借款总额 * 借款利率）/ 存款总额```
-存款额度计算
-```新的存款总额 = 存款总额 +（存款总额 * 存款利率 * 时间）```
-贷款额度
-```新的贷款总额 = 贷款总额 +（贷款总额 * 贷款利率 * 时间）```
+# compound 经济模型
+## 流动性来源
+用户存钱
+## 提供流动性激励
+存款利率
+## 资金池风险
+为了防止挤兑，建立资金池储备金，储备金来源是利息积累的一部分
+## 利率
+存款利率 = 贷款利率 * 资金使用率
+资金使用率 = 总借款 / (资金池余额 + 总借款 - 储备金)
 
 
 # 部署错误问题修改
@@ -75,7 +62,9 @@ mint函数是把指定的token根据当前token的价格存入compound中，然�
 代码部署设置市场应该使用`comptroller`的地址，而不是使用代理合约`unitoller`的地址。之前由于错误使用，导致在设置代币加入市场后，明明已经加入市场查找时候能找到，调用无法调用
 
 # 概念
-以下概念部分摘自[Keegan小钢 文章](https://learnblockchain.cn/article/2593#%E5%88%A9%E7%8E%87%E6%A8%A1%E5%9E%8B)并作出一部分简化修改。
+以下概念部分摘自[Keegan小钢](https://learnblockchain.cn/article/2593#%E5%88%A9%E7%8E%87%E6%A8%A1%E5%9E%8B)并作出一部分简化修改。
+## 存款利率
+存款利率的计算需先得到借款利率，和借款利率一样，都是每个区块计算一次，同一个区块的放贷人对于相同的资产获得相同的放贷利率。
 ## 清算激励
 清算人的清算奖励机制。清算人清算借款人后可以得到的建立1.08(compound)，该奖励是由借款人支出。
 ## 抵押率
@@ -86,8 +75,47 @@ mint函数是把指定的token根据当前token的价格存入compound中，然�
 用户在 Compound 上存入资产的凭证,每一种标的资产都有对应的一种 cToken。每种token兑换cToken部署时候都能设置token <=> cToken对换比例。
 比如：ETH 对应 cETH，USDT 对应 cUSDT，当用户向 Compound 存入 USDT 则会得到对应比例的cUSDT。取款时就可以用 cUSDT 换回对应比例的USDT标的资产。
 ## 兑换率（Exchange Rate）
-cToken 与标的资产的兑换比例，比如 cETH 的兑换率为 0.02，即 1 个 cETH 可以兑换 0.02 个 ETH。兑换率会随着时间推移不断上涨，因此，持有 cToken 就等于不断生息，所以也才叫生息代币。计算公式为：exchangeRate = (totalCash + totalBorrows - totalReserves) / totalSupply
+cToken 与标的资产的兑换比例，比如 cETH 的兑换率为 0.02，即 1 个 cETH 可以兑换 0.02 个 ETH。兑换率会随着时间推移不断上涨，因此，持有 cToken 就等于不断生息，所以也才叫生息代币。
 ## 抵押因子（Collateral Factor）
 每种标的资产都有一个抵押因子，代表用户抵押的资产价值对应可得到的借款的比率，即用来衡量可借额度的。取值范围 0-1，当为 0 时，表示该类资产不能作为抵押品去借贷其他资产。一般最高设为 0.75，比如 ETH，假如用户存入了 0.1 个 ETH 并开启作为抵押品，当时的 ETH 价值为 2000 美元，则可借额度为 0.1 * 2000 * 0.75 = 150 美元，可最多借出价值 150 美元的其他资产。
 ## 储备金系数(Reserve Factor）
-即协议抽取借款人支付的利息的百分比，这根据资产的不同而决定 (Compound协议中，不同资产有着不同的储备金系数)
+即协议抽取借款人支付的利息的百分比，这根据资产的不同而决定 (Compound协议中，不同资产有着不同的储备金系数)。备用金因子 （reserveFactor ）的作用是确保抵押收益率小于借款利率。
+## 利息产生
+列入dai/cDai比例 = 1/40，可以兑换40000个cDai。这时我存入和100dai到compound中，当时兑换率为0.025。一年后我想全部取出这时候兑换率为0.0275。这时候40000 * 0.00275 = 110dai。
+## 利用率乘数
+
+# 计算公式
+以下部分摘自[Compound完全解析-利率模型篇](https://www.wesz.com/qukuailian/2568.html)，并作出部分修改。
+## 兑换率
+```
+    兑换率 = 未被借走的 + 未还总量(含利息) - 储备金 / 总量
+    exchangeRate = (totalCash + totalBorrows - totalReserves) / totalSupply
+```
+## 存款年利率
+以Compound DAI为例，基础利率(年化利率)= 5%，加给利率(年化利率乘基)= 12%，若以目前当下的使用率= 62.13%来计算：
+借款年利率 = 5% + (12% x 0.6213) = 12.4556%
+也就是上图所显示的12.46% 的由来，也就是说，借款人所需要支付利息的年利率，在这个当下是12.46%。
+```
+    块质押利率(存款) = 资金使用率 * 借款利率 *（1 - 储备金率）
+    supplyRate = utilizationRate * borrowRate * (1 - reserveFactor)
+```
+## 借款年利率
+```
+    块质押利率(存款) = 资金使用率 * 借款利率 *（1 - 储备金率）
+    supplyRate = utilizationRate * borrowRate * (1 - reserveFactor)
+```
+## 使用率
+```
+    totalBorrows / (totalCasg + totalBorrows)
+```
+## 存款额度计算
+```
+    新的存款总额 = 存款总额 +（存款总额 * 存款利率 * 时间）
+```
+## 贷款额度
+```
+    新的贷款总额 = 贷款总额 +（贷款总额 * 贷款利率 * 时间）
+```
+
+笔记文档：[https://www.yuque.com/qdwds](https://www.yuque.com/qdwds)
+vx：qdwdss

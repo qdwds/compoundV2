@@ -25,19 +25,19 @@ contract WhitePaperInterestRateModel is InterestRateModel {
     uint public constant blocksPerYear = 2102400;
 
     /**
-      * @notice 给出利率斜率的利用率乘数
+      * @notice 给出利率斜率的利用率乘数 每块乘数
       */
     uint public multiplierPerBlock;
 
     /**
-      * @notice 基准利率，即利用率为0时的y轴截距
+      * @notice 基准利率，即利用率为0时的y轴截距 每个块的基本费率
       */
     uint public baseRatePerBlock;
 
     /**
       * @notice 构建利率模型
       * @param baseRatePerYear 近似目标基础 APR，尾数（按 1e18 缩放） // 年化利率
-      * @param multiplierPerYear 利率利用率的增长率（按 1e18 缩放） // 年利率乘数
+      * @param multiplierPerYear 利率利用率的增长率（按 1e18 缩放） //  利用率乘数
       */
     constructor(
         uint baseRatePerYear, 
