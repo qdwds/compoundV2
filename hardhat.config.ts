@@ -13,7 +13,6 @@ const config: HardhatUserConfig = {
 				//   auto: false,
 				//   interval: [500, 1000],	//	0.5s - 1s 随机时间创建区块
 				// }
-			// accounts:[process.env.GRANACHE_PRIVATE_KEY!]
 		},
 		oke:{
 			url:"https://exchaintestrpc.okex.org",
