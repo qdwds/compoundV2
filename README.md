@@ -1,33 +1,33 @@
 # compound
 compound一个以太坊中去中心化的货币市场。任何人都能存币和借币，就像一个银行，用户可以存币获取利息收益，或进行抵押借币。
 
-# 当前项目如何部署
+# 项目部署
 ## 创建.env文件
 ```
-    ##  hardhat 本地网络的私钥 
-    HARDHAT_PRIVATE_KEY = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
-    ## 部署主网时候需要的私钥
-    OKE_PRIVATE_KEY = 
+##  hardhat 本地网络的私钥 
+HARDHAT_PRIVATE_KEY = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+## 部署主网时候需要的私钥
+OKE_PRIVATE_KEY = 
 ```
 ## 下载本地依赖
 ```
-    yarn  或者 npm i 
+yarn  或者 npm i 
 ```
 ## 启动区块链网络 
 ```
-    npx harhdat 
+npx harhdat 
 ```
 ## 部署网络
 ```
-    //  本地网络
-    npx hardhat run scripts/deploy.ts
-    //  主网或测试网络  其他网络资金修改hardhat.config.ts代码
-    npx hardhat run scripts/deploy.ts --network oke
+//  本地网络
+npx hardhat run scripts/deploy.ts
+//  主网或测试网络  其他网络资金修改hardhat.config.ts代码
+npx hardhat run scripts/deploy.ts --network oke
 ```
 ## 调用执行
 ```
-    //  调用其他命令一致
-    npx hardhat run src/cToken/mint.ts
+//  调用其他命令一致
+npx hardhat run src/cToken/mint.ts
 ```
 
 # 关键词概念
