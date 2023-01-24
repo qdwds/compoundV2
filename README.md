@@ -147,5 +147,5 @@ totalBorrows / (totalCasg + totalBorrows)
 新的贷款总额 = 贷款总额 +（贷款总额 * 贷款利率 * 时间）
 ```
 
-笔记文档：[区块链笔记](https://www.yuque.com/qdwds)
+笔记文档：[区块链笔记](https://www.yuque.com/qdwds)\
 哔哩哔哩：[视频合集](https://space.bilibili.com/449244768?spm_id_from=333.1007.0.0)
